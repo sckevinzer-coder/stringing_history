@@ -88,16 +88,16 @@ app.notFound((c) => {
   return c.text('404 Not Found', 404)
 })
 
-// 에러 핸들러
+// 에러 핸들러 (내부 정보 노출 차단)
 app.onError((err, c) => {
   console.error(err)
   if (c.req.path.startsWith('/api/')) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: '서버 오류가 발생했습니다.' }), {
       status: 500,
       headers: { 'content-type': 'application/json; charset=utf-8' },
     })
   }
-  return c.text(`500: ${err.message}`, 500)
+  return c.text('서버 오류가 발생했습니다.', 500)
 })
 
 export default app

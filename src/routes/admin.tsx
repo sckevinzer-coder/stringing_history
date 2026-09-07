@@ -419,7 +419,7 @@ adminRoutes.post('/rackets/:id/edit', async (c) => {
         400,
       )
     }
-    return c.text(`수정 실패: ${e?.message ?? 'unknown'}`, 500)
+    return c.text('수정 실패: 서버 오류가 발생했습니다.', 500)
   }
 })
 
@@ -554,7 +554,7 @@ adminRoutes.post('/new', async (c) => {
         400,
       )
     }
-    return c.text(`등록 실패: ${e?.message ?? 'unknown'}`, 500)
+    return c.text('등록 실패: 서버 오류가 발생했습니다.', 500)
   }
 })
 
@@ -684,7 +684,7 @@ adminRoutes.post('/edit/:id', async (c) => {
         400,
       )
     }
-    return c.text(`수정 실패: ${e?.message ?? 'unknown'}`, 500)
+    return c.text('수정 실패: 서버 오류가 발생했습니다.', 500)
   }
 })
 
