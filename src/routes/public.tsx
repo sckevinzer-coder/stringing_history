@@ -276,7 +276,7 @@ publicRoutes.get('/strings', async (c) => {
   const db = getDb(c.env.DB)
   const conds: any[] = []
   if (q) {
-    const like_ = `%${q}%`
+        const like_ = `%${escapeLike(q)}%`
     conds.push(or(
       like(strings.brand, like_),
       like(strings.name, like_),
