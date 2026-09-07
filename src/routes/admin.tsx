@@ -59,7 +59,7 @@ adminRoutes.post('/login', async (c) => {
   const body = await c.req.parseBody()
   const adminId = String(body.admin_id ?? '')
   const password = String(body.password ?? '')
-    const ADMIN_ID = 'sckevinzer'
+    const ADMIN_ID = c.env.ADMIN_ID
   const ADMIN_PASSWORD = c.env.ADMIN_PASSWORD
 
   // 무차별 대입 방어: 5회 실패 시 60초 잠금
