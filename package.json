@@ -1,0 +1,26 @@
+{
+  "name": "stringing-history",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply stringing_history_db --local",
+    "db:seed:local": "wrangler d1 execute stringing_history_db --local --file=./seed.local.sql",
+    "db:reset:local": "wrangler d1 execute stringing_history_db --local --command=\"DELETE FROM string_jobs; DELETE FROM rackets; DELETE FROM customers;\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241224.0",
+    "@types/node": "^22.10.2",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.129.0"
+  }
+}
