@@ -40,11 +40,11 @@ adminRoutes.get('/login', (c) => {
         <form method="post" action="/rhksflwk/login" class="flex flex-col gap-3">
           <label class="flex flex-col text-sm">
             <span class="text-slate-600 mb-1">아이디</span>
-            <input type="text" name="admin_id" placeholder="아이디 입력" class="border border-slate-300 rounded px-3 py-2" />
+            <input type="text" name="admin_id" autofocus autocomplete="username" placeholder="아이디 입력" class="border border-slate-300 rounded px-3 py-2" />
           </label>
           <label class="flex flex-col text-sm">
             <span class="text-slate-600 mb-1">비밀번호</span>
-            <input type="password" name="password" autofocus required class="border border-slate-300 rounded px-3 py-2" />
+            <input type="password" name="password" required autocomplete="current-password" class="border border-slate-300 rounded px-3 py-2" />
           </label>
           <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">로그인</button>
         </form>

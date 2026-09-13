@@ -217,6 +217,20 @@
 - `src/routes/admin.tsx` — 모든 리다이렉트에 toast 메시지
 - `src/routes/strings.tsx` — 모든 리다이렉트에 toast 메시지
 
+## 완료 (Phase 5-2) — 작업 복사/빠른등록 + 관리자 로그인 UX (2026-09-13)
+
+### 작업 복사 / 빠른등록
+- 대시보드 이력 목록 각 행에 `복사` / `빠른등록` 버튼 추가 (기존 `수정` / `삭제` 유지)
+- `복사` → `/rhksflwk/new?copy={id}`: 고객/라켓/스트링/텐션/컷길이/가격/메모를 그대로 프리필, 날짜만 오늘로 세팅 + 안내 배너 표시
+- `빠른등록` → `POST /rhksflwk/jobs/:id/duplicate`: 클릭 1번으로 즉시 복제 (날짜=오늘), 토스트로 완료 확인
+- 정렬(작업일 내림차순 + ID 내림차순) 그대로라 복사본은 목록 최상단에 표시
+- 변경 파일: `src/routes/admin.tsx`
+
+### 관리자 로그인 포커스 개선
+- `autofocus`가 비밀번호 칸에 있어 아이디 입력이 불편했던 문제 수정
+- 아이디 `<input>`으로 `autofocus` 이동 + `autocomplete="username"` / `autocomplete="current-password"` 추가
+- 변경 파일: `src/routes/admin.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시
