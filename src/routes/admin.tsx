@@ -95,9 +95,18 @@ adminRoutes.post('/login', async (c) => {
 adminRoutes.use('/*', requireAdmin)
 //adminRoutes.use('/*', siteAuthMiddleware)
 
-// 대시보드 (작업 이력 목록 + 관리 메뉴)
+// 대시보드 (작업 이력 목록 + 관리 메뉴) — 페이지네이션 (100건/페이지)
 adminRoutes.get('/', async (c) => {
+  const url = new URL(c.req.url)
+  const page = Math.max(1, numOrNull(url.searchParams.get('page')) ?? 1)
+  const PAGE_SIZE = 100
   const db = getDb(c.env.DB)
+
+  const totalRows = await db.select({ n: count() }).from(stringJobs).all()
+  const total = totalRows[0]?.n ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const safeOffset = (safePage - 1) * PAGE_SIZE
   const jobs = await db
     .select({
       id: stringJobs.id,
@@ -120,7 +129,8 @@ adminRoutes.get('/', async (c) => {
     .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
     .innerJoin(customers, eq(customers.id, rackets.customerId))
     .orderBy(desc(stringJobs.jobDate), desc(stringJobs.id))
-    .limit(100)
+    .limit(PAGE_SIZE)
+    .offset(safeOffset)
     .all()
 
   return c.html(
@@ -133,7 +143,7 @@ adminRoutes.get('/', async (c) => {
           <a href="/rhksflwk/customers" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded">고객 관리</a>
         </nav>
       </div>
-      <p class="text-sm text-slate-600 mb-4">최근 등록된 작업 이력 (최대 100건)</p>
+      <p class="text-sm text-slate-600 mb-4">전체 {total}건 중 {safeOffset + 1}–{Math.min(safeOffset + PAGE_SIZE, total)} 표시 (페이지 {safePage}/{totalPages})</p>
             {jobs.length === 0 ? (
         <div class="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center text-slate-500">
           등록된 작업이 없습니다. 우측 상단의 "+ 작업 등록"을 눌러 시작하세요.
@@ -186,6 +196,21 @@ adminRoutes.get('/', async (c) => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {totalPages > 1 && (
+        <div class="flex items-center justify-center gap-2 mt-4 text-sm">
+          {safePage > 1 ? (
+            <a href={`/rhksflwk?page=${safePage - 1}`} class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">← 이전</a>
+          ) : (
+            <span class="px-3 py-1.5 border border-slate-200 rounded text-slate-400">← 이전</span>
+          )}
+          <span class="text-slate-600">{safePage} / {totalPages}</span>
+          {safePage < totalPages ? (
+            <a href={`/rhksflwk?page=${safePage + 1}`} class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">다음 →</a>
+          ) : (
+            <span class="px-3 py-1.5 border border-slate-200 rounded text-slate-400">다음 →</span>
+          )}
         </div>
       )}
     </Layout>,
