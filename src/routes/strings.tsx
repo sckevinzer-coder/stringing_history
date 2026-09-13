@@ -103,6 +103,7 @@ stringsRoutes.get('/', async (c) => {
             <tbody>
               {rows.map((r) => (
                                 <tr class="border-t border-slate-200 hover:bg-slate-50 transition-colors">
+                  <td class="px-3 py-2">{r.id}</td>
                   <td class="px-3 py-2">{escapeHtml(r.brand)}</td>
                   <td class="px-3 py-2">{escapeHtml(r.name)}</td>
                   <td class="px-3 py-2">{(STRING_CATEGORIES as Record<string, string>)[r.category] ?? r.category}</td>
