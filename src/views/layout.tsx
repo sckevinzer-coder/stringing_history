@@ -7,10 +7,11 @@ export const Layout: FC<{ children: any; title: string; isAdmin: boolean; appNam
   appName,
 }) => {
   return (
-    <html lang="ko">
+        <html lang="ko">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23FEBE03'/%3E%3Cpath d='M10 10c4 2 4 8 8 12' stroke='%23FFFFFF' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M22 10c-4 2 -4 8 -8 12' stroke='%23FFFFFF' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
         <title>{`${title} - ${appName}`}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>{`

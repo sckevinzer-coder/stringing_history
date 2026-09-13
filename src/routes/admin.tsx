@@ -173,7 +173,11 @@ adminRoutes.get('/', async (c) => {
                   </td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">{j.price != null ? `${j.price.toLocaleString('ko-KR')}원` : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
-                    <a href={`/rhksflwk/edit/${j.id}`} class="text-blue-600 hover:underline">수정</a>
+                    <a href={`/rhksflwk/new?copy=${j.id}`} class="text-emerald-600 hover:underline" title="이 작업 내용을 복사해 새 이력 등록">복사</a>
+                    <a href={`/rhksflwk/edit/${j.id}`} class="text-blue-600 hover:underline ml-2">수정</a>
+                    <form method="post" action={`/rhksflwk/jobs/${j.id}/duplicate`} class="inline" onsubmit="return confirm('이 작업을 오늘 날짜로 바로 등록하시겠습니까?')">
+                      <button class="text-emerald-700 hover:underline ml-2">빠른등록</button>
+                    </form>
                     <form method="post" action={`/rhksflwk/jobs/${j.id}/delete`} class="inline" onsubmit="return confirm('정말 삭제하시겠습니까?')">
                       <button class="text-red-600 hover:underline ml-2">삭제</button>
                     </form>
@@ -437,7 +441,33 @@ adminRoutes.post('/rackets/:id/delete', async (c) => {
 adminRoutes.get('/new', async (c) => {
   const url = new URL(c.req.url)
   const presetCustomerId = numOrNull(url.searchParams.get('customer_id'))
+  const copyId = numOrNull(url.searchParams.get('copy'))
   const db = getDb(c.env.DB)
+  // 복사 모드: 기존 작업 1건을 조회해 폼 프리필 (날짜는 오늘로)
+  let copyJob: {
+    customerId: number; customerName: string | null
+    racketId: number; stringType: string; stringId: number | null
+    tensionMain: number | null; tensionCross: number | null
+    cutLengthMain: number | null; cutLengthCross: number | null
+    price: number | null; memo: string | null
+  } | null = null
+  if (copyId != null) {
+    const rows = await db
+      .select({
+        customerId: rackets.customerId, customerName: customers.name,
+        racketId: stringJobs.racketId, stringType: stringJobs.stringType, stringId: stringJobs.stringId,
+        tensionMain: stringJobs.tensionMain, tensionCross: stringJobs.tensionCross,
+        cutLengthMain: stringJobs.cutLengthMain, cutLengthCross: stringJobs.cutLengthCross,
+        price: stringJobs.price, memo: stringJobs.memo,
+      })
+      .from(stringJobs)
+      .innerJoin(rackets, eq(stringJobs.racketId, rackets.id))
+      .innerJoin(customers, eq(rackets.customerId, customers.id))
+      .where(eq(stringJobs.id, copyId))
+      .limit(1)
+      .all()
+    if (rows.length > 0) copyJob = rows[0]
+  }
   const allCustomersRaw = await db.select().from(customers).orderBy(customers.name).all()
   const allRacketsRaw = await db.select().from(rackets).orderBy(rackets.id).all()
   // Drizzle 결과 객체를 명시적으로 plain object로 변환
@@ -455,8 +485,9 @@ adminRoutes.get('/new', async (c) => {
       stringPattern: r.stringPattern,
     })
   }
-  const presetRackets = presetCustomerId != null
-    ? (allRacketsByCustomer[String(presetCustomerId)] ?? [])
+  const effectivePresetCustomerIdRaw = copyJob?.customerId ?? presetCustomerId
+  const presetRackets = effectivePresetCustomerIdRaw != null
+    ? (allRacketsByCustomer[String(effectivePresetCustomerIdRaw)] ?? [])
     : []
 
   const masterStringsRaw = await db
@@ -466,19 +497,40 @@ adminRoutes.get('/new', async (c) => {
     .all()
   const masterStrings = masterStringsRaw.map((m) => ({ id: m.id, brand: m.brand, name: m.name, gauge: m.gauge }))
 
+  const effectivePresetCustomerName = copyJob?.customerName ?? null
+  const copyToday = new Date().toISOString().slice(0, 10)
+
   return c.html(
-    <Layout title="작업 등록" isAdmin={true} appName={c.env.APP_NAME}>
+    <Layout title={copyJob ? '작업 복사 등록' : '작업 등록'} isAdmin={true} appName={c.env.APP_NAME}>
       <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold">새 작업 등록</h1>
+        <h1 class="text-2xl font-semibold">{copyJob ? '작업 복사 등록' : '새 작업 등록'}</h1>
         <a href="/rhksflwk" class="text-sm text-slate-600 hover:text-blue-600">← 대시보드</a>
       </div>
+      {copyJob && (
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded px-3 py-2 mb-4 text-sm">
+          이전 작업 내용을 복사했습니다. 날짜는 오늘로 설정되어 있습니다. 라켓/스트링 등 변경 후 등록하세요.
+        </div>
+      )}
       <JobForm
         customers={allCustomers}
-        presetCustomerId={presetCustomerId}
+        presetCustomerId={effectivePresetCustomerIdRaw}
+        presetCustomerName={effectivePresetCustomerName}
         presetRackets={presetRackets}
         allRacketsByCustomer={allRacketsByCustomer}
         masterStrings={masterStrings}
         isEdit={false}
+        values={copyJob ? {
+          racketId: copyJob.racketId,
+          stringType: copyJob.stringType,
+          stringId: copyJob.stringId,
+          tensionMain: copyJob.tensionMain,
+          tensionCross: copyJob.tensionCross,
+          cutLengthMain: copyJob.cutLengthMain,
+          cutLengthCross: copyJob.cutLengthCross,
+          jobDate: copyToday,
+          price: copyJob.price,
+          memo: copyJob.memo,
+        } : undefined}
       />
     </Layout>,
   )
@@ -686,6 +738,40 @@ adminRoutes.post('/edit/:id', async (c) => {
     }
     return c.text('수정 실패: 서버 오류가 발생했습니다.', 500)
   }
+})
+
+// ----- 작업 빠른등록 (POST): 기존 작업을 오늘 날짜로 즉시 복제 -----
+adminRoutes.post('/jobs/:id/duplicate', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isFinite(id)) return c.notFound()
+  const db = getDb(c.env.DB)
+  const rows = await db
+    .select({
+      racketId: stringJobs.racketId, stringType: stringJobs.stringType, stringId: stringJobs.stringId,
+      tensionMain: stringJobs.tensionMain, tensionCross: stringJobs.tensionCross,
+      cutLengthMain: stringJobs.cutLengthMain, cutLengthCross: stringJobs.cutLengthCross,
+      price: stringJobs.price, memo: stringJobs.memo,
+    })
+    .from(stringJobs)
+    .where(eq(stringJobs.id, id))
+    .limit(1)
+    .all()
+  if (rows.length === 0) return c.notFound()
+  const src = rows[0]
+  const today = new Date().toISOString().slice(0, 10)
+  await db.insert(stringJobs).values({
+    racketId: src.racketId,
+    stringType: src.stringType,
+    stringId: src.stringId,
+    tensionMain: src.tensionMain,
+    tensionCross: src.tensionCross,
+    cutLengthMain: src.cutLengthMain,
+    cutLengthCross: src.cutLengthCross,
+    jobDate: today,
+    price: src.price,
+    memo: src.memo,
+  }).run()
+  return toastRedirect('/rhksflwk', `빠른등록 완료 (${today}) — 고객/라켓/스트링은 그대로 복사되었습니다.`)
 })
 
 // ----- 작업 삭제 (form 기반) -----

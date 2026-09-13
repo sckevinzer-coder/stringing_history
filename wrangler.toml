@@ -1,4 +1,4 @@
-name = "tennis"
+name = "stringing"
 main = "src/index.ts"
 compatibility_date = "2024-12-24"
 compatibility_flags = ["nodejs_compat"]

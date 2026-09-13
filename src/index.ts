@@ -25,23 +25,59 @@ app.get('/login', (c) => {
   const url = new URL(c.req.url)
   const error = url.searchParams.get('error') === '1'
   const redirect = url.searchParams.get('redirect') ?? '/'
-  return c.html(`
-<!DOCTYPE html>
+  return c.html(`<!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>사이트 접속 - 텐nis</title></head>
-<body class="bg-slate-50">
-  <div class="flex min-h-screen items-center justify-center">
-    <div class="bg-white border border-slate-200 rounded-lg p-6 w-80">
-      <h1 class="text-lg font-semibold mb-4">사이트 접속</h1>
-      ${error ? '<div class="mb-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">비밀번호가 올바르지 않습니다.</div>' : ''}
-      <form method="post" action="/login" class="flex flex-col gap-3">
-        <input type="hidden" name="redirect" value="${redirect}" />
-        <label class="flex flex-col text-sm">
-          <span class="text-slate-600 mb-1">비밀번호</span>
-          <input type="password" name="password" autofocus required class="border border-slate-300 rounded px-3 py-2" />
-        </label>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">접속</button>
-      </form>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사이트 접속 - 테니스</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
+        <div class="flex items-center gap-2 text-white">
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M7.5 9.5c2 1.5 2 4.7 4.5 6.5M16.5 9.5c-2 1.5-2 4.7-4.5 6.5" stroke-linecap="round"/>
+          </svg>
+          <h1 class="text-lg font-semibold">사이트 접속</h1>
+        </div>
+      </div>
+      <div class="px-6 py-5">
+        ${error ? '<div class="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 flex items-start gap-2"><svg class="w-4 h-4 shrink-0 mt-0.5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg><span>비밀번호가 올바르지 않습니다.</span></div>' : ''}
+        <form method="post" action="/login" class="flex flex-col gap-4">
+          <input type="hidden" name="redirect" value="${redirect}" />
+          <div class="flex flex-col">
+            <label for="password" class="text-sm font-medium text-slate-700 mb-1.5">비밀번호</label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              autofocus
+              required
+              placeholder="비밀번호를 입력하세요"
+              autocomplete="current-password"
+              class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm
+                     focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+                     placeholder:text-slate-400 transition-shadow duration-150"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800
+                   text-white font-medium rounded-lg px-4 py-2.5 text-sm
+                   shadow-sm hover:shadow transition-all duration-150
+                   focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          >
+            접속하기
+          </button>
+        </form>
+        <p class="mt-4 text-xs text-slate-500 text-center">
+          이 사이트는 비밀번호로 보호되어 있습니다.
+        </p>
+      </div>
     </div>
   </div>
 </body>
@@ -66,7 +102,7 @@ app.get('/logout', async (c) => {
       await db.delete(sessions).where(eq(sessions.id, sid)).run()
     } catch { /* 세션 삭제 실패해도 로그아웃 진행 */ }
   }
-    c.header('Set-Cookie', `${c.env.SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`)
+  c.header('Set-Cookie', `${c.env.SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`)
   c.header('Set-Cookie', 'site_auth=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax', { append: true })
   return c.redirect('/login')
 })

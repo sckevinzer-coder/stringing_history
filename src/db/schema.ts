@@ -31,7 +31,7 @@ export const strings = sqliteTable('strings', {
   color: text('color'),
   stiffnessRa: real('stiffness_ra'),
   tensionLossPct: real('tension_loss_pct'),
-  spinPotential: integer('spin_potential'),
+  spinPotential: real('spin_potential'),
   cost: real('cost'),
   laborCost: real('labor_cost').notNull().default(10000),
   memo: text('memo'),

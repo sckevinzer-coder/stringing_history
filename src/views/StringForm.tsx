@@ -56,13 +56,19 @@ export const StringForm: FC<{
         </label>
 
         <label class="flex flex-col text-sm">
-          <span class="text-slate-600 mb-1">형태</span>
-          <select name="shape" class="border border-slate-300 rounded px-3 py-2">
-            <option value="">-</option>
+          <span class="text-slate-600 mb-1">형태 <span class="text-xs text-slate-400">(직접 입력 가능)</span></span>
+          <input
+            name="shape"
+            list="shape-options"
+            value={escapeHtml(v.shape ?? '')}
+            placeholder="예: 10각꼬임, 원형, 러프"
+            class="border border-slate-300 rounded px-3 py-2"
+          />
+          <datalist id="shape-options">
             {Object.entries(shapes).map(([k, label]) => (
-              <option value={k} {...(v.shape === k ? { selected: true } : {})}>{label}</option>
+              <option value={k}>{label}</option>
             ))}
-          </select>
+          </datalist>
         </label>
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">색상</span>
@@ -76,7 +82,7 @@ export const StringForm: FC<{
 
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">강성 (RA)</span>
-          <input type="number" step="1" name="stiffness_ra" value={v.stiffnessRa ?? ''} class="border border-slate-300 rounded px-3 py-2" />
+          <input type="number" step="0.1" name="stiffness_ra" value={v.stiffnessRa ?? ''} class="border border-slate-300 rounded px-3 py-2" />
         </label>
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">텐션 로스 (%)</span>
@@ -85,7 +91,7 @@ export const StringForm: FC<{
 
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">스핀 잠재력 (1~10)</span>
-          <input type="number" step="1" min="1" max="10" name="spin_potential" value={v.spinPotential ?? ''} class="border border-slate-300 rounded px-3 py-2" />
+          <input type="number" step="0.1" min="0" max="10" name="spin_potential" value={v.spinPotential ?? ''} class="border border-slate-300 rounded px-3 py-2" />
         </label>
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">스트링 비용 (원) <span class="text-xs text-slate-500">(공임비 포함 총액)</span></span>
