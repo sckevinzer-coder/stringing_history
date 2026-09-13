@@ -112,7 +112,7 @@ stringsRoutes.get('/', async (c) => {
                   <td class="px-3 py-2">{(STRING_SHAPES as Record<string, string>)[r.shape ?? ''] ?? r.shape ?? '-'}</td>
                   <td class="px-3 py-2 text-right">{r.stiffnessRa != null ? r.stiffnessRa : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.tensionLossPct != null ? `${r.tensionLossPct}%` : '-'}</td>
-                  <td class="px-3 py-2 text-right">{r.spinPotential != null ? `${r.spinPotential}/10` : '-'}</td>
+                  <td class="px-3 py-2 text-right">{r.spinPotential != null ? r.spinPotential : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.cost != null ? `₩${r.cost.toLocaleString('ko-KR')}` : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     <a href={`/rhksflwk/strings/${r.id}/edit`} class="text-blue-600 hover:underline">수정</a>

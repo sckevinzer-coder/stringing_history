@@ -90,8 +90,8 @@ export const StringForm: FC<{
         </label>
 
         <label class="flex flex-col text-sm">
-          <span class="text-slate-600 mb-1">스핀 잠재력 (1~10)</span>
-          <input type="number" step="0.1" min="0" max="10" name="spin_potential" value={v.spinPotential ?? ''} class="border border-slate-300 rounded px-3 py-2" />
+          <span class="text-slate-600 mb-1">스핀 잠재력</span>
+          <input type="number" step="0.1" name="spin_potential" value={v.spinPotential ?? ''} class="border border-slate-300 rounded px-3 py-2" />
         </label>
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">스트링 비용 (원) <span class="text-xs text-slate-500">(공임비 포함 총액)</span></span>
