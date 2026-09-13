@@ -231,6 +231,14 @@
 - 아이디 `<input>`으로 `autofocus` 이동 + `autocomplete="username"` / `autocomplete="current-password"` 추가
 - 변경 파일: `src/routes/admin.tsx`
 
+## 완료 (Phase 5-3) — 고객 삭제 (2026-09-13)
+
+- 고객 상세 페이지 하단에 "위험 구역" 섹션 추가 (빨간 테두리 박스로 일상 동작과 분리)
+- 라켓 수 + 작업 이력 건수를 미리 조회해 화면과 삭제 confirm에 명시
+- `POST /rhksflwk/customers/:id/delete`: FK cascade로 라켓 + 작업 이력이 함께 삭제, 완료 후 고객 목록으로 토스트 리다이렉트
+- 고객 목록에는 삭제 버튼을 두지 않음 (오클릭 방지)
+- 변경 파일: `src/routes/admin.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

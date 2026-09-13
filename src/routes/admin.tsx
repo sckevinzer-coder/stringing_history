@@ -6,7 +6,7 @@ import { Layout } from '../views/layout'
 import { JobForm } from '../views/JobForm'
 import { getDb } from '../db/client'
 import { customers, rackets, stringJobs, strings } from '../db/schema'
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc, desc, eq, count, inArray } from 'drizzle-orm'
 import { escapeHtml, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
 import { sessions } from '../db/schema'
 import { buildCookie } from '../lib/auth'
@@ -275,7 +275,20 @@ adminRoutes.get('/customers/:id', async (c) => {
   if (customer.length === 0) return c.notFound()
   const cust = customer[0]
 
-  const rackList = await db.select().from(rackets).where(eq(rackets.customerId, id)).orderBy(rackets.id).all()
+  const rackListRaw = await db.select().from(rackets).where(eq(rackets.customerId, id)).orderBy(rackets.id).all()
+  const rackList = rackListRaw
+
+  // 삭제 confirm용 건수: 라켓 수 + 연결된 작업 이력 수
+  const racketIds = rackListRaw.map((r) => r.id)
+  let jobCount = 0
+  if (racketIds.length > 0) {
+    const counts = await db
+      .select({ n: count() })
+      .from(stringJobs)
+      .where(inArray(stringJobs.racketId, racketIds))
+      .all()
+    jobCount = counts[0]?.n ?? 0
+  }
 
   return c.html(
     <Layout title={`${cust.name} - 고객 상세`} isAdmin={true} appName={c.env.APP_NAME}>
@@ -333,6 +346,16 @@ adminRoutes.get('/customers/:id', async (c) => {
       <p class="mt-4 text-sm">
         <a href={`/rhksflwk/new?customer_id=${id}`} class="text-blue-600 hover:underline">+ 이 고객의 새 작업 등록</a>
       </p>
+
+      <section class="mt-8 border border-red-300 bg-red-50 rounded-lg p-4">
+        <h2 class="font-semibold text-red-700 mb-1">위험 구역</h2>
+        <p class="text-sm text-red-600 mb-3">
+          고객을 삭제하면 라켓 {rackListRaw.length}개와 연결된 작업 이력 {jobCount}건이 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+        </p>
+        <form method="post" action={`/rhksflwk/customers/${id}/delete`} onsubmit={`return confirm('정말 ${cust.name} 고객을 삭제하시겠습니까?\\n라켓 ${rackListRaw.length}개, 작업 이력 ${jobCount}건이 함께 삭제됩니다.')`}>
+          <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">고객 삭제</button>
+        </form>
+      </section>
     </Layout>,
   )
 })
@@ -425,6 +448,16 @@ adminRoutes.post('/rackets/:id/edit', async (c) => {
     }
     return c.text('수정 실패: 서버 오류가 발생했습니다.', 500)
   }
+})
+
+// 고객 삭제 (POST) — 라켓 + 작업 이력이 cascade로 함께 삭제됨
+adminRoutes.post('/customers/:id/delete', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isFinite(id)) return c.notFound()
+  const db = getDb(c.env.DB)
+  const res = await db.delete(customers).where(eq(customers.id, id)).returning({ id: customers.id, name: customers.name }).all()
+  if (res.length === 0) return c.notFound()
+  return toastRedirect('/rhksflwk/customers', `${res[0].name} 고객이 삭제되었습니다.`)
 })
 
 // ----- 라켓 삭제 (POST) -----
