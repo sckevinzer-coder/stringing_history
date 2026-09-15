@@ -103,6 +103,19 @@ publicRoutes.get('/', async (c) => {
   }
   const where = conds.length > 0 ? and(...conds) : undefined
 
+  const getSortExpr = (key: SortKey, order: 'asc' | 'desc') => {
+    const dir = order === 'asc' ? asc : desc
+    switch (key) {
+      case 'customer': return [dir(customers.name), dir(stringJobs.id)]
+      case 'racket': return [dir(rackets.racketModel), dir(stringJobs.id)]
+      case 'stringType': return [dir(stringJobs.stringType), dir(stringJobs.id)]
+      case 'tensionMain': return [dir(stringJobs.tensionMain), dir(stringJobs.id)]
+      case 'price': return [dir(stringJobs.price), dir(stringJobs.id)]
+      case 'jobDate':
+      default: return [dir(stringJobs.jobDate), dir(stringJobs.id)]
+    }
+  }
+
   const rows = await db
     .select({
       id: stringJobs.id,
@@ -128,7 +141,7 @@ publicRoutes.get('/', async (c) => {
     .innerJoin(customers, eq(customers.id, rackets.customerId))
     .leftJoin(strings, eq(strings.id, stringJobs.stringId))
     .where(where as any)
-    .orderBy(desc(stringJobs.jobDate), desc(stringJobs.id))
+    .orderBy(...getSortExpr(activeSort, activeOrder))
     .limit(pageSize + 1)
     .offset(offset)
     .all()
