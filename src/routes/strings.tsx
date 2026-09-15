@@ -5,7 +5,7 @@ import { Layout } from '../views/layout'
 import { StringForm } from '../views/StringForm'
 import { getDb } from '../db/client'
 import { strings as stringsTbl } from '../db/schema'
-import { and, asc, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 import { escapeHtml, escapeLike, ValidationError, requireString, numOrNull, toNumberOrNull } from '../lib/validation'
 import {
   STRING_CATEGORIES,
@@ -30,6 +30,14 @@ stringsRoutes.get('/', async (c) => {
   const q = (url.searchParams.get('q') ?? '').trim()
   const category = (url.searchParams.get('category') ?? '').trim() || null
 
+  type SortKey = 'brand' | 'name' | 'category' | 'gauge' | 'color' | 'shape' | 'stiffnessRa' | 'tensionLossPct' | 'spinPotential' | 'cost'
+  const SORTABLE: SortKey[] = ['brand', 'name', 'category', 'gauge', 'color', 'shape', 'stiffnessRa', 'tensionLossPct', 'spinPotential', 'cost']
+  const sort = (url.searchParams.get('sort') ?? '') as SortKey
+  const sortOrder = url.searchParams.get('order') === 'desc' ? 'desc' : 'asc'
+  const isValidSort = (s: string): s is SortKey => SORTABLE.includes(s as SortKey)
+  const activeSort: SortKey = isValidSort(sort) ? sort : 'name'
+  const activeOrder = sortOrder
+
   const db = getDb(c.env.DB)
   const conds: any[] = []
     if (q) {
@@ -38,11 +46,59 @@ stringsRoutes.get('/', async (c) => {
   }
   if (category) conds.push(eq(stringsTbl.category, category))
   const where = conds.length > 0 ? and(...conds) : undefined
+
+  const getSortExpr = (key: SortKey, order: 'asc' | 'desc') => {
+    const dir = order === 'asc' ? asc : desc
+    switch (key) {
+      case 'brand': return [dir(stringsTbl.brand), asc(stringsTbl.name)]
+      case 'category': return [dir(stringsTbl.category), asc(stringsTbl.name)]
+      case 'gauge': return [dir(stringsTbl.gauge), asc(stringsTbl.name)]
+      case 'color': return [dir(stringsTbl.color), asc(stringsTbl.name)]
+      case 'shape': return [dir(stringsTbl.shape), asc(stringsTbl.name)]
+      case 'stiffnessRa': return [dir(stringsTbl.stiffnessRa), asc(stringsTbl.name)]
+      case 'tensionLossPct': return [dir(stringsTbl.tensionLossPct), asc(stringsTbl.name)]
+      case 'spinPotential': return [dir(stringsTbl.spinPotential), asc(stringsTbl.name)]
+      case 'cost': return [dir(stringsTbl.cost), asc(stringsTbl.name)]
+      case 'name':
+      default: return [dir(stringsTbl.name), asc(stringsTbl.brand)]
+    }
+  }
+
+  const buildQs = (overrides: Record<string, string | number | null>) => {
+    const params = new URLSearchParams()
+    const base: Record<string, string> = {}
+    if (q) base['q'] = q
+    if (category) base['category'] = category
+    if (activeSort !== 'name') base['sort'] = activeSort
+    if (activeOrder !== 'asc') base['order'] = activeOrder
+    for (const [k, v] of Object.entries(base)) if (v) params.set(k, v)
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v == null || v === '') params.delete(k)
+      else params.set(k, String(v))
+    }
+    const s = params.toString()
+    return s ? `?${s}` : ''
+  }
+
+  // 정렬 가능한 컬럼 헤더 생성
+  const sortableHeader = (key: SortKey, label: string, align: 'left' | 'right' = 'left') => {
+    const isActive = activeSort === key
+    const nextOrder = isActive && activeOrder === 'asc' ? 'desc' : 'asc'
+    const arrow = isActive ? (activeOrder === 'asc' ? ' ▲' : ' ▼') : ''
+    return (
+      <th class={`text-${align} px-3 py-2 hover:bg-slate-200 select-none`}>
+        <a href={`/rhksflwk/strings${buildQs({ sort: key, order: nextOrder })}`} class="block cursor-pointer">
+          {label}{arrow}
+        </a>
+      </th>
+    )
+  }
+
   const rows = await db
     .select()
     .from(stringsTbl)
     .where(where as any)
-    .orderBy(asc(stringsTbl.brand), asc(stringsTbl.name))
+    .orderBy(...getSortExpr(activeSort, activeOrder))
     .all()
 
   return c.html(
@@ -87,17 +143,17 @@ stringsRoutes.get('/', async (c) => {
                         <thead class="bg-slate-100 text-slate-700">
               <tr>
                 <th class="text-left px-3 py-2">ID</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">브랜드</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">이름</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">카테고리</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">게이지</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">색상</th>
-                <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">형태</th>
-                <th class="text-right px-3 py-2 hover:bg-slate-200 cursor-pointer">강성</th>
-                <th class="text-right px-3 py-2 hover:bg-slate-200 cursor-pointer">텐션 로스</th>
-                <th class="text-right px-3 py-2 hover:bg-slate-200 cursor-pointer">스핀</th>
-                <th class="text-right px-3 py-2 hover:bg-slate-200 cursor-pointer">비용 (공임포함)</th>
-                <th class="text-right px-3 py-2 hover:bg-slate-200 cursor-pointer">관리</th>
+                {sortableHeader('brand', '브랜드')}
+                {sortableHeader('name', '이름')}
+                {sortableHeader('category', '카테고리')}
+                {sortableHeader('gauge', '게이지')}
+                {sortableHeader('color', '색상')}
+                {sortableHeader('shape', '형태')}
+                {sortableHeader('stiffnessRa', '강성', 'right')}
+                {sortableHeader('tensionLossPct', '텐션 로스', 'right')}
+                {sortableHeader('spinPotential', '스핀', 'right')}
+                {sortableHeader('cost', '비용 (공임포함)', 'right')}
+                <th class="text-right px-3 py-2">관리</th>
               </tr>
             </thead>
             <tbody>

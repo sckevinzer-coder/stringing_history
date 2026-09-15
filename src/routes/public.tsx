@@ -287,6 +287,11 @@ publicRoutes.get('/strings', async (c) => {
   const q = (url.searchParams.get('q') ?? '').trim()
   const category = (url.searchParams.get('category') ?? '').trim() || null
 
+  type StringSortKey = 'name' | 'brand' | 'costAsc' | 'costDesc'
+  const sort = (url.searchParams.get('sort') ?? '') as StringSortKey
+  const SORTABLE_STRINGS: StringSortKey[] = ['name', 'brand', 'costAsc', 'costDesc']
+  const activeStringSort: StringSortKey = SORTABLE_STRINGS.includes(sort as StringSortKey) ? (sort as StringSortKey) : 'name'
+
   const db = getDb(c.env.DB)
   const conds: any[] = []
   if (q) {
@@ -299,11 +304,30 @@ publicRoutes.get('/strings', async (c) => {
   if (category) conds.push(eq(strings.category, category))
   const where = conds.length > 0 ? and(...conds) : undefined
 
+  const getStringSortExpr = (key: StringSortKey) => {
+    switch (key) {
+      case 'brand': return [asc(strings.brand), asc(strings.name)]
+      case 'costAsc': return [asc(strings.cost), asc(strings.name)]
+      case 'costDesc': return [desc(strings.cost), asc(strings.name)]
+      case 'name':
+      default: return [asc(strings.name), asc(strings.brand)]
+    }
+  }
+
+  const stringSortQs = (key: StringSortKey) => {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (category) params.set('category', category)
+    if (key !== 'name') params.set('sort', key)
+    const s = params.toString()
+    return s ? `/strings?${s}` : '/strings'
+  }
+
   const rows = await db
     .select()
     .from(strings)
     .where(where as any)
-    .orderBy(asc(strings.brand), asc(strings.name))
+    .orderBy(...getStringSortExpr(activeStringSort))
     .all()
   const isAdmin = c.get('isAdmin')
 
@@ -311,7 +335,21 @@ publicRoutes.get('/strings', async (c) => {
     <Layout title="보유 스트링" isAdmin={isAdmin} appName={c.env.APP_NAME}>
       <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-semibold">보유 스트링</h1>
-        <a href="/" class="text-sm text-slate-600 hover:text-blue-600">← 작업 이력</a>
+        <div class="flex items-center gap-2 text-sm">
+          <label class="flex items-center gap-1.5 text-slate-600">
+            <span>정렬</span>
+            <select
+              onchange="window.location.href = this.value"
+              class="border border-slate-300 rounded px-2 py-1.5 text-sm"
+            >
+              <option value={stringSortQs('name')} {...(activeStringSort === 'name' ? { selected: true } : {})}>이름순</option>
+              <option value={stringSortQs('brand')} {...(activeStringSort === 'brand' ? { selected: true } : {})}>브랜드순</option>
+              <option value={stringSortQs('costAsc')} {...(activeStringSort === 'costAsc' ? { selected: true } : {})}>가격 낮은순</option>
+              <option value={stringSortQs('costDesc')} {...(activeStringSort === 'costDesc' ? { selected: true } : {})}>가격 높은순</option>
+            </select>
+          </label>
+          <a href="/" class="text-slate-600 hover:text-blue-600">← 작업 이력</a>
+        </div>
       </div>
 
       <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-900">
