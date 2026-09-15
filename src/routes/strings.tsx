@@ -150,7 +150,7 @@ stringsRoutes.get('/', async (c) => {
                 {sortableHeader('color', '색상')}
                 {sortableHeader('shape', '형태')}
                 {sortableHeader('stiffnessRa', '강성', 'right')}
-                {sortableHeader('tensionLossPct', '텐션 로스', 'right')}
+                {sortableHeader('tensionLossPct', '텐션 로스 (%)', 'right')}
                 {sortableHeader('spinPotential', '스핀', 'right')}
                 {sortableHeader('cost', '비용 (공임포함)', 'right')}
                 <th class="text-right px-3 py-2">관리</th>
@@ -167,7 +167,7 @@ stringsRoutes.get('/', async (c) => {
                   <td class="px-3 py-2">{(STRING_COLORS as Record<string, string>)[r.color ?? ''] ?? r.color ?? '-'}</td>
                   <td class="px-3 py-2">{(STRING_SHAPES as Record<string, string>)[r.shape ?? ''] ?? r.shape ?? '-'}</td>
                   <td class="px-3 py-2 text-right">{r.stiffnessRa != null ? r.stiffnessRa : '-'}</td>
-                  <td class="px-3 py-2 text-right">{r.tensionLossPct != null ? `${r.tensionLossPct}%` : '-'}</td>
+                  <td class="px-3 py-2 text-right">{r.tensionLossPct != null ? r.tensionLossPct : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.spinPotential != null ? r.spinPotential : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.cost != null ? `₩${r.cost.toLocaleString('ko-KR')}` : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">

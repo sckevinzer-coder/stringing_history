@@ -297,6 +297,13 @@
 - 카드 요약 한 줄(`1.25 mm · 폴리 · ...`)은 헤더가 없어 mm 유지 (`formatGauge`는 요약용으로 유지)
 - 변경 파일: `src/routes/strings.tsx`, `src/views/StringCard.tsx`
 
+## 완료 (Phase 5-12) — 텐션 로스 단위 중복 제거 (2026-09-15)
+
+- 관리자 목록: 헤더 "텐션 로스 (%)", 셀은 `5%` → `5` (값만)
+- 공개 카드 상세: 라벨 "텐션 로스 (%)", 값은 % 없이 표시
+- 폼 라벨 "텐션 로스 (%)"는 기존 그대로 유지
+- 변경 파일: `src/routes/strings.tsx`, `src/views/StringCard.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

@@ -7,7 +7,6 @@ import {
   summaryLine,
   formatCost,
   formatStiffnessRa,
-  formatTensionLossPct,
   formatSpinPotential,
 } from '../lib/stringLabels'
 
@@ -62,8 +61,8 @@ export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
           <dd>{shapeLabel(s.shape ?? null)}</dd>
           <dt class="text-slate-500">강성 (RA)</dt>
           <dd>{formatStiffnessRa(s.stiffnessRa ?? null)}</dd>
-          <dt class="text-slate-500">텐션 로스</dt>
-          <dd>{formatTensionLossPct(s.tensionLossPct ?? null)}</dd>
+          <dt class="text-slate-500">텐션 로스 (%)</dt>
+          <dd>{s.tensionLossPct ?? '-'}</dd>
           <dt class="text-slate-500">스핀 잠재력</dt>
           <dd>{formatSpinPotential(s.spinPotential ?? null)}</dd>
         </dl>
