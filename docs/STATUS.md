@@ -290,6 +290,13 @@
 - 공개 드롭다운에 두께 두꺼운순 추가 (총 8개: 이름순/브랜드순/두께 얇은순·두꺼운순/색상순/형태순/가격 낮은순·높은순)
 - 변경 파일: `src/lib/stringLabels.ts`, `src/views/StringForm.tsx`, `src/views/StringCard.tsx`, `src/routes/strings.tsx`, `src/routes/public.tsx`
 
+## 완료 (Phase 5-11) — 두께 단위 중복 제거 (2026-09-15)
+
+- 관리자 목록: 헤더 "두께 (mm)"는 유지, 셀은 `1.25 mm` → `1.25` (값만)
+- 공개 카드 상세: 라벨 "두께 (mm)"는 유지, 값은 mm 없이 표시
+- 카드 요약 한 줄(`1.25 mm · 폴리 · ...`)은 헤더가 없어 mm 유지 (`formatGauge`는 요약용으로 유지)
+- 변경 파일: `src/routes/strings.tsx`, `src/views/StringCard.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

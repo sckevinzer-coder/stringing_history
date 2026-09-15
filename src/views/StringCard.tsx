@@ -5,7 +5,6 @@ import {
   shapeLabel,
   colorLabel,
   summaryLine,
-  formatGauge,
   formatCost,
   formatStiffnessRa,
   formatTensionLossPct,
@@ -56,7 +55,7 @@ export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
           <dt class="text-slate-500">카테고리</dt>
           <dd>{categoryLabel(s.category)}</dd>
           <dt class="text-slate-500">두께 (mm)</dt>
-          <dd>{s.gauge ? escapeHtml(formatGauge(s.gauge)) : '-'}</dd>
+          <dd>{s.gauge ? escapeHtml(s.gauge) : '-'}</dd>
           <dt class="text-slate-500">색상</dt>
           <dd>{colorLabel(s.color ?? null)}</dd>
           <dt class="text-slate-500">형태</dt>

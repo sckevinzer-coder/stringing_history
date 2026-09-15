@@ -11,7 +11,6 @@ import {
   STRING_CATEGORIES,
   STRING_SHAPES,
   STRING_COLORS,
-  formatGauge,
 } from '../lib/stringLabels'
 
 // Toast 리다이렉트 헬퍼
@@ -164,7 +163,7 @@ stringsRoutes.get('/', async (c) => {
                   <td class="px-3 py-2">{escapeHtml(r.brand)}</td>
                   <td class="px-3 py-2">{escapeHtml(r.name)}</td>
                   <td class="px-3 py-2">{(STRING_CATEGORIES as Record<string, string>)[r.category] ?? r.category}</td>
-                  <td class="px-3 py-2">{r.gauge ? escapeHtml(formatGauge(r.gauge)) : '-'}</td>
+                  <td class="px-3 py-2">{r.gauge ? escapeHtml(r.gauge) : '-'}</td>
                   <td class="px-3 py-2">{(STRING_COLORS as Record<string, string>)[r.color ?? ''] ?? r.color ?? '-'}</td>
                   <td class="px-3 py-2">{(STRING_SHAPES as Record<string, string>)[r.shape ?? ''] ?? r.shape ?? '-'}</td>
                   <td class="px-3 py-2 text-right">{r.stiffnessRa != null ? r.stiffnessRa : '-'}</td>
