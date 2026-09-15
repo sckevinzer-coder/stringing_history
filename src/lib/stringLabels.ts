@@ -4,8 +4,8 @@
 export const STRING_CATEGORIES = {
   natural_gut: '천연 거트',
   polyester: '폴리',
-  multifilament: '인조 십',
-  synthetic_gut: '합성 거트 (막줄)',
+  multifilament: '멀티필라멘트',
+  synthetic_gut: '합성 거트',
   hybrid: '하이브리드',
 } as const
 
