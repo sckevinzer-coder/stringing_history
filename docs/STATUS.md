@@ -287,6 +287,7 @@
   - 관리자 목록 헤더 "두께 (mm)", 셀에 숫자값이면 `1.25 mm` 표시 (구 표기 "16" 등은 그대로)
   - 공개 카드 상세 "두께 (mm)" + 요약 한 줄에도 mm 반영 (`formatGauge` 추가)
 - 공개 보유 스트링 드롭다운에 두께 얇은순/색상순/형태순 추가 (총 7개)
+- 공개 드롭다운에 두께 두꺼운순 추가 (총 8개: 이름순/브랜드순/두께 얇은순·두꺼운순/색상순/형태순/가격 낮은순·높은순)
 - 변경 파일: `src/lib/stringLabels.ts`, `src/views/StringForm.tsx`, `src/views/StringCard.tsx`, `src/routes/strings.tsx`, `src/routes/public.tsx`
 
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)

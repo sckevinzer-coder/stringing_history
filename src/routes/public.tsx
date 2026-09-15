@@ -287,10 +287,13 @@ publicRoutes.get('/strings', async (c) => {
   const q = (url.searchParams.get('q') ?? '').trim()
   const category = (url.searchParams.get('category') ?? '').trim() || null
 
-  type StringSortKey = 'name' | 'brand' | 'gauge' | 'color' | 'shape' | 'costAsc' | 'costDesc'
+  type StringSortKey = 'name' | 'brand' | 'gaugeAsc' | 'gaugeDesc' | 'color' | 'shape' | 'costAsc' | 'costDesc'
   const sort = (url.searchParams.get('sort') ?? '') as StringSortKey
-  const SORTABLE_STRINGS: StringSortKey[] = ['name', 'brand', 'gauge', 'color', 'shape', 'costAsc', 'costDesc']
-  const activeStringSort: StringSortKey = SORTABLE_STRINGS.includes(sort as StringSortKey) ? (sort as StringSortKey) : 'name'
+  const SORTABLE_STRINGS: StringSortKey[] = ['name', 'brand', 'gaugeAsc', 'gaugeDesc', 'color', 'shape', 'costAsc', 'costDesc']
+  const rawSort = url.searchParams.get('sort') ?? ''
+  const activeStringSort: StringSortKey = SORTABLE_STRINGS.includes(rawSort as StringSortKey)
+    ? (rawSort as StringSortKey)
+    : rawSort === 'gauge' ? 'gaugeAsc' : 'name'
 
   const db = getDb(c.env.DB)
   const conds: any[] = []
@@ -307,7 +310,8 @@ publicRoutes.get('/strings', async (c) => {
   const getStringSortExpr = (key: StringSortKey) => {
     switch (key) {
       case 'brand': return [asc(strings.brand), asc(strings.name)]
-      case 'gauge': return [asc(strings.gauge), asc(strings.name)]
+      case 'gaugeAsc': return [asc(strings.gauge), asc(strings.name)]
+      case 'gaugeDesc': return [desc(strings.gauge), asc(strings.name)]
       case 'color': return [asc(strings.color), asc(strings.name)]
       case 'shape': return [asc(strings.shape), asc(strings.name)]
       case 'costAsc': return [asc(strings.cost), asc(strings.name)]
@@ -347,7 +351,8 @@ publicRoutes.get('/strings', async (c) => {
             >
               <option value={stringSortQs('name')} {...(activeStringSort === 'name' ? { selected: true } : {})}>이름순</option>
               <option value={stringSortQs('brand')} {...(activeStringSort === 'brand' ? { selected: true } : {})}>브랜드순</option>
-              <option value={stringSortQs('gauge')} {...(activeStringSort === 'gauge' ? { selected: true } : {})}>두께 얇은순</option>
+              <option value={stringSortQs('gaugeAsc')} {...(activeStringSort === 'gaugeAsc' ? { selected: true } : {})}>두께 얇은순</option>
+              <option value={stringSortQs('gaugeDesc')} {...(activeStringSort === 'gaugeDesc' ? { selected: true } : {})}>두께 두꺼운순</option>
               <option value={stringSortQs('color')} {...(activeStringSort === 'color' ? { selected: true } : {})}>색상순</option>
               <option value={stringSortQs('shape')} {...(activeStringSort === 'shape' ? { selected: true } : {})}>형태순</option>
               <option value={stringSortQs('costAsc')} {...(activeStringSort === 'costAsc' ? { selected: true } : {})}>가격 낮은순</option>
