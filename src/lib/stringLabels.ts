@@ -6,6 +6,7 @@ export const STRING_CATEGORIES = {
   polyester: '폴리',
   multifilament: '멀티필라멘트',
   synthetic_gut: '합성 거트',
+  makjul: '막줄',
   hybrid: '하이브리드',
 } as const
 
