@@ -51,8 +51,8 @@ export const StringForm: FC<{
           </select>
         </label>
         <label class="flex flex-col text-sm">
-          <span class="text-slate-600 mb-1">게이지</span>
-          <input name="gauge" value={v.gauge ?? ''} placeholder="예: 16, 16L, 17" class="border border-slate-300 rounded px-3 py-2" />
+          <span class="text-slate-600 mb-1">두께 (mm)</span>
+          <input name="gauge" value={v.gauge ?? ''} placeholder="예: 1.25, 1.30" class="border border-slate-300 rounded px-3 py-2" />
         </label>
 
         <label class="flex flex-col text-sm">

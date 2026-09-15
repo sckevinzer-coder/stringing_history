@@ -280,6 +280,15 @@
 - 검색·카테고리 필터와 정렬 파라미터 함께 유지
 - 변경 파일: `src/routes/strings.tsx`, `src/routes/public.tsx`
 
+## 완료 (Phase 5-10) — 게이지 → 두께(mm) 표기 + 공개 정렬 확장 (2026-09-15)
+
+- 게이지 표기를 두께(mm)로 변경 (DB `gauge` 컬럼 그대로, 표시·라벨만)
+  - 등록/수정 폼: 라벨 "두께 (mm)" + placeholder "예: 1.25, 1.30"
+  - 관리자 목록 헤더 "두께 (mm)", 셀에 숫자값이면 `1.25 mm` 표시 (구 표기 "16" 등은 그대로)
+  - 공개 카드 상세 "두께 (mm)" + 요약 한 줄에도 mm 반영 (`formatGauge` 추가)
+- 공개 보유 스트링 드롭다운에 두께 얇은순/색상순/형태순 추가 (총 7개)
+- 변경 파일: `src/lib/stringLabels.ts`, `src/views/StringForm.tsx`, `src/views/StringCard.tsx`, `src/routes/strings.tsx`, `src/routes/public.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

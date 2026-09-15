@@ -287,9 +287,9 @@ publicRoutes.get('/strings', async (c) => {
   const q = (url.searchParams.get('q') ?? '').trim()
   const category = (url.searchParams.get('category') ?? '').trim() || null
 
-  type StringSortKey = 'name' | 'brand' | 'costAsc' | 'costDesc'
+  type StringSortKey = 'name' | 'brand' | 'gauge' | 'color' | 'shape' | 'costAsc' | 'costDesc'
   const sort = (url.searchParams.get('sort') ?? '') as StringSortKey
-  const SORTABLE_STRINGS: StringSortKey[] = ['name', 'brand', 'costAsc', 'costDesc']
+  const SORTABLE_STRINGS: StringSortKey[] = ['name', 'brand', 'gauge', 'color', 'shape', 'costAsc', 'costDesc']
   const activeStringSort: StringSortKey = SORTABLE_STRINGS.includes(sort as StringSortKey) ? (sort as StringSortKey) : 'name'
 
   const db = getDb(c.env.DB)
@@ -307,6 +307,9 @@ publicRoutes.get('/strings', async (c) => {
   const getStringSortExpr = (key: StringSortKey) => {
     switch (key) {
       case 'brand': return [asc(strings.brand), asc(strings.name)]
+      case 'gauge': return [asc(strings.gauge), asc(strings.name)]
+      case 'color': return [asc(strings.color), asc(strings.name)]
+      case 'shape': return [asc(strings.shape), asc(strings.name)]
       case 'costAsc': return [asc(strings.cost), asc(strings.name)]
       case 'costDesc': return [desc(strings.cost), asc(strings.name)]
       case 'name':
@@ -344,6 +347,9 @@ publicRoutes.get('/strings', async (c) => {
             >
               <option value={stringSortQs('name')} {...(activeStringSort === 'name' ? { selected: true } : {})}>이름순</option>
               <option value={stringSortQs('brand')} {...(activeStringSort === 'brand' ? { selected: true } : {})}>브랜드순</option>
+              <option value={stringSortQs('gauge')} {...(activeStringSort === 'gauge' ? { selected: true } : {})}>두께 얇은순</option>
+              <option value={stringSortQs('color')} {...(activeStringSort === 'color' ? { selected: true } : {})}>색상순</option>
+              <option value={stringSortQs('shape')} {...(activeStringSort === 'shape' ? { selected: true } : {})}>형태순</option>
               <option value={stringSortQs('costAsc')} {...(activeStringSort === 'costAsc' ? { selected: true } : {})}>가격 낮은순</option>
               <option value={stringSortQs('costDesc')} {...(activeStringSort === 'costDesc' ? { selected: true } : {})}>가격 높은순</option>
             </select>

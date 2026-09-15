@@ -62,6 +62,13 @@ export function colorLabel(c: string | null | undefined): string {
   return (STRING_COLORS as Record<string, string>)[c] ?? c
 }
 
+export function formatGauge(g: string | null | undefined): string {
+  if (!g) return '-'
+  // 숫자만으로 이루어진 값이면 mm 단위로 표시
+  if (/^\d+(\.\d+)?$/.test(g.trim())) return `${g.trim()} mm`
+  return g
+}
+
 // 카드의 "기본 정보" 한 줄 텍스트
 export function summaryLine(opts: {
   gauge?: string | null
@@ -70,7 +77,7 @@ export function summaryLine(opts: {
   color?: string | null
 }): string {
   const parts: string[] = []
-  if (opts.gauge) parts.push(opts.gauge)
+  if (opts.gauge) parts.push(formatGauge(opts.gauge))
   if (opts.category) parts.push(categoryLabel(opts.category))
   if (opts.color) parts.push(colorLabel(opts.color))
   if (opts.shape) parts.push(shapeLabel(opts.shape))
