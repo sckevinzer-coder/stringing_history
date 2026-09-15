@@ -258,6 +258,12 @@
 - 등록/수정 폼 라벨의 `(1~10)` 제거 + min/max 제한 해제 (10점 만점 아님)
 - 변경 파일: `src/routes/strings.tsx`, `src/views/StringForm.tsx`
 
+## 완료 (Phase 5-7) — 고객 상세 라켓 목록 정렬 + 동일추가 (2026-09-13)
+
+- 행 데이터에 ID `<td>`가 빠져 헤더와 열이 하나씩 밀리던 문제 수정 (스트링 목록과 동일한 패턴)
+- 각 라켓 행에 `동일추가` 버튼: 클릭 1번으로 같은 고객에게 동일 스펙 라켓 복제 (`POST /rhksflwk/rackets/:id/duplicate`)
+- 변경 파일: `src/routes/admin.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

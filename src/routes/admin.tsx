@@ -347,16 +347,20 @@ adminRoutes.get('/customers/:id', async (c) => {
           </thead>
           <tbody>
             {rackList.length === 0 ? (
-              <tr><td colspan={6} class="px-3 py-6 text-center text-slate-500">등록된 라켓이 없습니다.</td></tr>
+              <tr><td colspan={7} class="px-3 py-6 text-center text-slate-500">등록된 라켓이 없습니다.</td></tr>
             ) : (
               rackList.map((r) => (
-                                <tr class="border-t border-slate-200 hover:bg-slate-50 transition-colors">
+                <tr class="border-t border-slate-200 hover:bg-slate-50 transition-colors">
+                  <td class="px-3 py-2">{r.id}</td>
                   <td class="px-3 py-2">{escapeHtml(r.racketModel)}</td>
                   <td class="px-3 py-2">{r.nickname ? escapeHtml(r.nickname) : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.headSize != null ? `${r.headSize} sq.in` : '-'}</td>
                   <td class="px-3 py-2">{r.stringPattern ? escapeHtml(r.stringPattern) : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     <a href={`/rhksflwk/rackets/${r.id}/edit`} class="text-blue-600 hover:underline">수정</a>
+                    <form method="post" action={`/rhksflwk/rackets/${r.id}/duplicate`} class="inline" onsubmit="return confirm('이 라켓과 동일한 스펙의 라켓을 하나 더 추가하시겠습니까?')">
+                      <button class="text-emerald-600 hover:underline ml-2">동일추가</button>
+                    </form>
                     <form method="post" action={`/rhksflwk/rackets/${r.id}/delete`} class="inline" onsubmit="return confirm('이 라켓과 연결된 모든 작업 이력이 삭제됩니다. 계속하시겠습니까?')">
                       <button class="text-red-600 hover:underline ml-2">삭제</button>
                     </form>
@@ -483,6 +487,24 @@ adminRoutes.post('/customers/:id/delete', async (c) => {
   const res = await db.delete(customers).where(eq(customers.id, id)).returning({ id: customers.id, name: customers.name }).all()
   if (res.length === 0) return c.notFound()
   return toastRedirect('/rhksflwk/customers', `${res[0].name} 고객이 삭제되었습니다.`)
+})
+
+// ----- 라켓 동일추가 (POST): 같은 고객에게 동일 스펙 라켓 1개 복제 -----
+adminRoutes.post('/rackets/:id/duplicate', async (c) => {
+  const id = Number(c.req.param('id'))
+  if (!Number.isFinite(id)) return c.notFound()
+  const db = getDb(c.env.DB)
+  const rows = await db.select().from(rackets).where(eq(rackets.id, id)).limit(1).all()
+  if (rows.length === 0) return c.notFound()
+  const src = rows[0]
+  await db.insert(rackets).values({
+    customerId: src.customerId,
+    racketModel: src.racketModel,
+    nickname: src.nickname,
+    headSize: src.headSize,
+    stringPattern: src.stringPattern,
+  }).run()
+  return toastRedirect(`/rhksflwk/customers/${src.customerId}`, `동일한 라켓(${src.racketModel})이 하나 더 추가되었습니다.`)
 })
 
 // ----- 라켓 삭제 (POST) -----
