@@ -162,9 +162,10 @@ publicRoutes.get('/', async (c) => {
     const nextOrder = isActive && activeOrder === 'desc' ? 'asc' : 'desc'
     const arrow = isActive ? (activeOrder === 'desc' ? ' ▼' : ' ▲') : ''
     return (
-      <th class="text-left px-3 py-2 cursor-pointer hover:bg-slate-200 select-none"
-          onClick={() => window.location.href = `/${buildQs({ sort: key, order: nextOrder })}`}>
-        {label}{arrow}
+      <th class="text-left px-3 py-2 hover:bg-slate-200 select-none">
+        <a href={`/?${buildQs({ sort: key, order: nextOrder })}`} class="block cursor-pointer">
+          {label}{arrow}
+        </a>
       </th>
     )
   }

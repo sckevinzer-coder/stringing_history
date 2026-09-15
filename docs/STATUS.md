@@ -264,6 +264,13 @@
 - 각 라켓 행에 `동일추가` 버튼: 클릭 1번으로 같은 고객에게 동일 스펙 라켓 복제 (`POST /rhksflwk/rackets/:id/duplicate`)
 - 변경 파일: `src/routes/admin.tsx`
 
+## 완료 (Phase 5-8) — 공개 작업 이력 정렬 헤더 수정 (2026-09-15)
+
+- 증상: 헤더 클릭 시 정렬이 동작하지 않음
+- 원인: `<th onClick={...}>` 방식 — Hono JSX SSR에서는 onClick 핸들러가 HTML에 렌더되지 않아 클릭이 무반응
+- 수정: `<th>` 안에 실제 `<a href="/?sort=...&order=...">` 링크 배치 (서버 렌더 HTML만으로 동작)
+- 변경 파일: `src/routes/public.tsx`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시
