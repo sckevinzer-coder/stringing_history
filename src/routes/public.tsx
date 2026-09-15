@@ -176,7 +176,7 @@ publicRoutes.get('/', async (c) => {
     const arrow = isActive ? (activeOrder === 'desc' ? ' ▼' : ' ▲') : ''
     return (
       <th class="text-left px-3 py-2 hover:bg-slate-200 select-none">
-        <a href={`/?${buildQs({ sort: key, order: nextOrder })}`} class="block cursor-pointer">
+        <a href={`/${buildQs({ sort: key, order: nextOrder })}`} class="block cursor-pointer">
           {label}{arrow}
         </a>
       </th>
