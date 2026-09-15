@@ -269,6 +269,7 @@
 - 증상: 헤더 클릭 시 정렬이 동작하지 않음
 - 원인: `<th onClick={...}>` 방식 — Hono JSX SSR에서는 onClick 핸들러가 HTML에 렌더되지 않아 클릭이 무반응
 - 수정: `<th>` 안에 실제 `<a href="/?sort=...&order=...">` 링크 배치 (서버 렌더 HTML만으로 동작)
+- 2차 수정: 쿼리가 `sort` 파라미터를 무시하고 항상 작업일 내림차순으로 고정되어 있던 문제 수정 — `getSortExpr(activeSort, activeOrder)`로 orderBy 동적 적용
 - 변경 파일: `src/routes/public.tsx`
 
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
