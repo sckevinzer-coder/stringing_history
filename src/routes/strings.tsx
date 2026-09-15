@@ -152,7 +152,7 @@ stringsRoutes.get('/', async (c) => {
                 {sortableHeader('stiffnessRa', '강성', 'right')}
                 {sortableHeader('tensionLossPct', '텐션 로스 (%)', 'right')}
                 {sortableHeader('spinPotential', '스핀', 'right')}
-                {sortableHeader('cost', '비용 (공임포함)', 'right')}
+                {sortableHeader('cost', '비용', 'right')}
                 <th class="text-right px-3 py-2">관리</th>
               </tr>
             </thead>

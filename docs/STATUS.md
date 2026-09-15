@@ -321,6 +321,13 @@
 - `STRING_CATEGORIES`에 `makjul: '막줄'` 추가 → 등록/수정 폼 select, 검색 필터, 정렬, 카드 표시에 자동 반영 (총 6개)
 - 변경 파일: `src/lib/stringLabels.ts` (DB 값은 직접 수정, 코드 배포로 라벨 반영)
 
+## 완료 (Phase 5-16) — 비용 헤더 단순화 + 8번 합성거트 복귀 (2026-09-15)
+
+- 관리자 목록 헤더 "비용 (공임포함)" → "비용"
+- 8번 프린스 카테고리 `makjul` → `synthetic_gut`(합성 거트)로 복귀 (운영 DB 직접 수정)
+- `STRING_CATEGORIES`에서 `makjul` 제거 (다시 5개)
+- 변경 파일: `src/routes/strings.tsx`, `src/lib/stringLabels.ts`
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시
