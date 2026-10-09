@@ -181,12 +181,12 @@ publicRoutes.get('/', async (c) => {
   }
 
   // 정렬 가능한 컬럼 헤더 생성
-  const sortableHeader = (key: string, label: string) => {
+  const sortableHeader = (key: string, label: string, hideOnMobile = false) => {
     const isActive = activeSort === key
     const nextOrder = isActive && activeOrder === 'desc' ? 'asc' : 'desc'
     const arrow = isActive ? (activeOrder === 'desc' ? ' ▼' : ' ▲') : ''
     return (
-      <th class="text-left px-3 py-2 hover:bg-slate-200 select-none">
+      <th class={`${hideOnMobile ? 'hidden md:table-cell ' : ''}text-left px-3 py-2 hover:bg-slate-200 select-none`}>
         <a href={`/${buildQs({ sort: key, order: nextOrder })}`} class="block cursor-pointer">
           {label}{arrow}
         </a>
@@ -266,7 +266,7 @@ publicRoutes.get('/', async (c) => {
                   <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">라켓 (헤드 / 패턴)</th>
                   {sortableHeader('stringType', '스트링')}
                   {sortableHeader('tensionMain', '텐션 (lbs)')}
-                  {sortableHeader('price', '비용')}
+                  {sortableHeader('price', '비용', true)}
                   <th class="hidden md:table-cell text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">메모</th>
                 </tr>
               </thead>
@@ -287,7 +287,7 @@ publicRoutes.get('/', async (c) => {
                       {r.masterCategory && <div class="mt-0.5 inline-block text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2 py-px">{categoryLabel(r.masterCategory)}</div>}
                     </td>
                     <td class="px-3 py-2 text-right whitespace-nowrap">{fmtTension(r.tensionMain, r.tensionCross)}</td>
-                                        <td class="px-3 py-2 text-right whitespace-nowrap">{fmtPrice(r.price ?? r.masterCost)}</td>
+                                        <td class="hidden md:table-cell px-3 py-2 text-right whitespace-nowrap">{fmtPrice(r.price ?? r.masterCost)}</td>
                     <td class="hidden md:table-cell px-3 py-2 max-w-xs">
                       {r.memo ? <span class="text-slate-600">{escapeHtml(r.memo)}</span> : <span class="text-slate-400">-</span>}
                     </td>
