@@ -17,6 +17,9 @@ export const RequestForm: FC<{
   const isJob = reqType === 'job'
   const label = (s: RequestStringLite) =>
     `${s.brand} ${s.name}${s.gauge ? ` ${s.gauge}` : ''}`
+  const presetLabel = presetStringId != null
+    ? (() => { const f = strings.find((s) => s.id === presetStringId); return f ? label(f) : '' })()
+    : ''
   return (
     <form method="post" action="/apply" class="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
       <input type="hidden" name="type" value={reqType} />
@@ -47,15 +50,14 @@ export const RequestForm: FC<{
           </label>
         ) : (
           <label class="flex flex-col text-sm">
-            <span class="text-slate-600 mb-1">스트링 선택</span>
-            <select name="string_id" class="border border-slate-300 rounded px-3 py-2">
-              <option value="">-- 목록에서 선택 (없으면 아래 직접 입력) --</option>
+            <span class="text-slate-600 mb-1">스트링 선택 <span class="text-xs text-slate-500">(검색 후 선택)</span></span>
+            <input id="purchase_string_input" list="purchase-string-list" placeholder="스트링명을 검색하세요" value={presetLabel} class="border border-slate-300 rounded px-3 py-2" />
+            <datalist id="purchase-string-list">
               {strings.map((s) => (
-                <option value={s.id} {...(s.id === presetStringId ? { selected: true } : {})}>
-                  {escapeHtml(label(s))}
-                </option>
+                <option value={escapeHtml(label(s))} data-string-id={s.id}>{escapeHtml(label(s))}</option>
               ))}
-            </select>
+            </datalist>
+            <input type="hidden" name="string_id" id="purchase_string_id" value={presetStringId ?? ''} />
           </label>
         )}
 
@@ -95,6 +97,26 @@ export const RequestForm: FC<{
         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded text-sm w-full sm:w-auto">신청하기</button>
         <a href="/strings" class="px-4 py-2.5 sm:py-2 rounded text-sm border border-slate-300 hover:bg-slate-50 text-center w-full sm:w-auto">취소</a>
       </div>
+      {!isJob && (
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var input = document.getElementById('purchase_string_input');
+            var hidden = document.getElementById('purchase_string_id');
+            var list = document.getElementById('purchase-string-list');
+            if (!input || !hidden || !list) return;
+            var map = {};
+            Array.prototype.forEach.call(list.querySelectorAll('option[data-string-id]'), function (opt) {
+              map[opt.getAttribute('value')] = opt.getAttribute('data-string-id');
+            });
+            function sync(){
+              var val = input.value.trim();
+              hidden.value = map[val] || '';
+            }
+            input.addEventListener('input', sync);
+            input.addEventListener('change', sync);
+          })();
+        ` }} />
+      )}
     </form>
   )
 }
