@@ -373,6 +373,7 @@
 - `requests` 테이블 + 신청 접수(`/apply`) + GitHub 이슈 자동 생성 + 관리자 신청 관리(`/rhksflwk/requests`) + 이력 변환(`/rhksflwk/new?request=`)
 - 스펙: `docs/superpowers/specs/2026-10-09-requests-design.md`, 계획: `docs/superpowers/plans/2026-10-09-requests.md`
 - ⚠️ 남은 수동 작업: `GITHUB_TOKEN` 시크릿 등록 + GitHub 알림 메일 설정(Watch → Issues) + 테스트 신청 1건으로 이슈/메일 확인
+- 트러블슈팅 (2026-10-09): 첫 테스트에서 이슈 생성 403 — 원인은 GitHub API의 `User-Agent` 헤더 필수 요구. `src/lib/github.ts`에 헤더 추가 후 해결. 토큰(`github_pat_`)·권한 설정은 정상이었음
 
 ## 완료로 정리 (백로그에서 제거)
 
