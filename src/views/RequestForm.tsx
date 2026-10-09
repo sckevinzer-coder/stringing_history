@@ -31,22 +31,14 @@ export const RequestForm: FC<{
 
         {isJob ? (
           <label class="flex flex-col text-sm">
-            <span class="text-slate-600 mb-1">스트링 <span class="text-red-500">*</span></span>
-            <select name="string_id" required class="border border-slate-300 rounded px-3 py-2">
-              <option value="">-- 스트링 선택 --</option>
-              {strings.map((s) => {
-                const soldout = s.remainingUses === 0
-                return (
-                  <option
-                    value={s.id}
-                    disabled={soldout}
-                    {...(s.id === presetStringId ? { selected: true } : {})}
-                  >
-                    {escapeHtml(label(s))}{soldout ? ' (품절)' : ''}
-                  </option>
-                )
-              })}
-            </select>
+            <span class="text-slate-600 mb-1">스트링 <span class="text-red-500">*</span> <span class="text-xs text-slate-500">(검색 후 선택, 품절 제외)</span></span>
+            <input id="job_string_input" name="string_input" list="job-string-list" required placeholder="스트링명을 검색하세요" value={presetLabel} class="border border-slate-300 rounded px-3 py-2" />
+            <datalist id="job-string-list">
+              {strings.filter((s) => s.remainingUses !== 0).map((s) => (
+                <option value={escapeHtml(label(s))} data-string-id={s.id}>{escapeHtml(label(s))}</option>
+              ))}
+            </datalist>
+            <input type="hidden" name="string_id" id="job_string_id" value={presetStringId ?? ''} />
           </label>
         ) : (
           <label class="flex flex-col text-sm">
@@ -97,6 +89,26 @@ export const RequestForm: FC<{
         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded text-sm w-full sm:w-auto">신청하기</button>
         <a href="/strings" class="px-4 py-2.5 sm:py-2 rounded text-sm border border-slate-300 hover:bg-slate-50 text-center w-full sm:w-auto">취소</a>
       </div>
+      {isJob && (
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var input = document.getElementById('job_string_input');
+            var hidden = document.getElementById('job_string_id');
+            var list = document.getElementById('job-string-list');
+            if (!input || !hidden || !list) return;
+            var map = {};
+            Array.prototype.forEach.call(list.querySelectorAll('option[data-string-id]'), function (opt) {
+              map[opt.getAttribute('value')] = opt.getAttribute('data-string-id');
+            });
+            function sync(){
+              var val = input.value.trim();
+              hidden.value = map[val] || '';
+            }
+            input.addEventListener('input', sync);
+            input.addEventListener('change', sync);
+          })();
+        ` }} />
+      )}
       {!isJob && (
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
