@@ -365,6 +365,8 @@
 - [x] 운영 DB 마이그레이션 자동화 (2026-10-09 — `.github/workflows/migrate.yml`: main 푸시 중 `migrations/**` 변경 또는 수동 실행 시 `wrangler d1 migrations apply --remote`. ⚠️ GitHub repo Settings → Secrets에 `CLOUDFLARE_API_TOKEN`(D1 편집 권한), `CLOUDFLARE_ACCOUNT_ID` 등록 필요)
 - [x] 페이지네이션 UI 개선 (2026-10-09, Phase 5-22 — 번호형 `« ‹ 1 … 4 5 [6] 7 8 … 20 › »`, 검색·정렬 유지. 공개는 COUNT 쿼리 + 범위 초과 보정 추가, 관리자 100건/페이지 유지. 로컬 검증: p1/p5/p99 렌더 확인)
 - [x] 모바일 UI 최적화 (2026-10-09, Phase 5-23 — 전 테이블 `text-xs sm:text-sm` + 모바일 여백 축소 CSS(`.data-table`, 639px 이하), 공개 메모열·관리자 컷길이열 모바일 숨김, 헤더/페이지네이션 줄바꿈, 등록 폼 버튼 전폭. 로직 변경 없음, 로컬 렌더 확인)
+- [x] 공개 작업이력 비용열 모바일 숨김 (2026-10-09 — 메모열과 동일 방식, 데스크탑 유지)
+- [x] 공개 검색폼 텐션 범위 모바일 숨김 (2026-10-09 — 데스크탑 유지)
 
 ## 완료로 정리 (백로그에서 제거)
 
