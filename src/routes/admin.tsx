@@ -23,6 +23,23 @@ function c_redirect(location: string) {
   return new Response(null, { status: 302, headers: { Location: location } })
 }
 
+// 번호형 페이지네이션 항목 (현재 기준 앞뒤 2개 + 처음/마지막, 사이 생략은 'ellipsis')
+function adminPageItems(cur: number, totalP: number): (number | 'ellipsis')[] {
+  const set = new Set<number>()
+  ;[1, totalP, cur - 2, cur - 1, cur, cur + 1, cur + 2].forEach((p) => {
+    if (p >= 1 && p <= totalP) set.add(p)
+  })
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: (number | 'ellipsis')[] = []
+  let prev = 0
+  for (const p of sorted) {
+    if (p - prev > 1) out.push('ellipsis')
+    out.push(p)
+    prev = p
+  }
+  return out
+}
+
 export const adminRoutes = new Hono<AppEnv>()
 
 // 로그인 페이지 (인증 없이 접근 가능 - 미들웨어보다 먼저 등록)
@@ -207,17 +224,31 @@ adminRoutes.get('/', async (c) => {
         </div>
       )}
       {totalPages > 1 && (
-        <div class="flex items-center justify-center gap-2 mt-4 text-sm">
-          {safePage > 1 ? (
-            <a href={`/rhksflwk?page=${safePage - 1}`} class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">← 이전</a>
-          ) : (
-            <span class="px-3 py-1.5 border border-slate-200 rounded text-slate-400">← 이전</span>
+        <div class="flex items-center justify-center gap-1.5 mt-4 text-sm">
+          {safePage > 1 && (
+            <a href="/rhksflwk?page=1" title="처음" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">«</a>
           )}
-          <span class="text-slate-600">{safePage} / {totalPages}</span>
-          {safePage < totalPages ? (
-            <a href={`/rhksflwk?page=${safePage + 1}`} class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">다음 →</a>
+          {safePage > 1 ? (
+            <a href={`/rhksflwk?page=${safePage - 1}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">‹</a>
           ) : (
-            <span class="px-3 py-1.5 border border-slate-200 rounded text-slate-400">다음 →</span>
+            <span class="px-2.5 py-1.5 border border-slate-200 rounded text-slate-400">‹</span>
+          )}
+          {adminPageItems(safePage, totalPages).map((p) =>
+            p === 'ellipsis' ? (
+              <span class="px-1 text-slate-400">…</span>
+            ) : p === safePage ? (
+              <span class="px-2.5 py-1.5 rounded bg-blue-600 text-white font-medium">{p}</span>
+            ) : (
+              <a href={`/rhksflwk?page=${p}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">{p}</a>
+            ),
+          )}
+          {safePage < totalPages ? (
+            <a href={`/rhksflwk?page=${safePage + 1}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">›</a>
+          ) : (
+            <span class="px-2.5 py-1.5 border border-slate-200 rounded text-slate-400">›</span>
+          )}
+          {safePage < totalPages && (
+            <a href={`/rhksflwk?page=${totalPages}`} title="마지막" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">»</a>
           )}
         </div>
       )}

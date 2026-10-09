@@ -363,7 +363,7 @@
 - [x] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리 뱃지 표시 (2026-10-09, Phase 5-21 — 공개+관리자, `masterCategory` LEFT JOIN + `categoryLabel` 뱃지, 미매칭은 표시 안 함)
 - [ ] `/strings/:id` 단일 상세 페이지 — 스킵 (카드 상세 토글로 충분, 2026-10-09)
 - [x] 운영 DB 마이그레이션 자동화 (2026-10-09 — `.github/workflows/migrate.yml`: main 푸시 중 `migrations/**` 변경 또는 수동 실행 시 `wrangler d1 migrations apply --remote`. ⚠️ GitHub repo Settings → Secrets에 `CLOUDFLARE_API_TOKEN`(D1 편집 권한), `CLOUDFLARE_ACCOUNT_ID` 등록 필요)
-- [ ] 페이지네이션 UI 개선 (현재는 단순 이전/다음)
+- [x] 페이지네이션 UI 개선 (2026-10-09, Phase 5-22 — 번호형 `« ‹ 1 … 4 5 [6] 7 8 … 20 › »`, 검색·정렬 유지. 공개는 COUNT 쿼리 + 범위 초과 보정 추가, 관리자 100건/페이지 유지. 로컬 검증: p1/p5/p99 렌더 확인)
 - [ ] 모바일 UI 최적화
 
 ## 완료로 정리 (백로그에서 제거)

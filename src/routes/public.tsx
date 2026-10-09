@@ -4,7 +4,7 @@ import { Layout } from '../views/layout'
 import { StringCard } from '../views/StringCard'
 import { getDb } from '../db/client'
 import { customers, rackets, stringJobs, strings } from '../db/schema'
-import { and, asc, desc, eq, gte, like, lte, or } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, like, lte, or } from 'drizzle-orm'
 import { escapeHtml } from '../lib/validation'
 import { STRING_CATEGORIES, formatManwon, categoryLabel } from '../lib/stringLabels'
 import { siteAuthMiddleware } from '../middleware/auth'
@@ -63,7 +63,6 @@ publicRoutes.get('/', async (c) => {
   const tensionMax = numFromQuery(url.searchParams.get('tension_max') ?? undefined)
   const page = Math.max(1, numFromQuery(url.searchParams.get('page') ?? undefined) ?? 1)
     const pageSize = 20
-  const offset = (page - 1) * pageSize
 
   // 정렬 (sortable columns)
   type SortKey = 'jobDate' | 'customer' | 'racket' | 'stringType' | 'tensionMain' | 'price'
@@ -101,6 +100,18 @@ publicRoutes.get('/', async (c) => {
     ))
   }
   const where = conds.length > 0 ? and(...conds) : undefined
+
+  const totalRows = await db
+    .select({ n: count() })
+    .from(stringJobs)
+    .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
+    .innerJoin(customers, eq(customers.id, rackets.customerId))
+    .where(where as any)
+    .all()
+  const total = totalRows[0]?.n ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const offset = (safePage - 1) * pageSize
 
   const getSortExpr = (key: SortKey, order: 'asc' | 'desc') => {
     const dir = order === 'asc' ? asc : desc
@@ -183,6 +194,22 @@ publicRoutes.get('/', async (c) => {
     )
   }
 
+  const pageItems = (cur: number, totalP: number): (number | 'ellipsis')[] => {
+    const set = new Set<number>()
+    ;[1, totalP, cur - 2, cur - 1, cur, cur + 1, cur + 2].forEach((p) => {
+      if (p >= 1 && p <= totalP) set.add(p)
+    })
+    const sorted = [...set].sort((a, b) => a - b)
+    const out: (number | 'ellipsis')[] = []
+    let prev = 0
+    for (const p of sorted) {
+      if (p - prev > 1) out.push('ellipsis')
+      out.push(p)
+      prev = p
+    }
+    return out
+  }
+
   return c.html(
     <Layout title="작업 이력" isAdmin={isAdmin} appName={c.env.APP_NAME}>
       <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-900">
@@ -220,7 +247,7 @@ publicRoutes.get('/', async (c) => {
 
       <section>
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold">전체 작업 이력 <span class="text-sm text-slate-500 font-normal">({items.length}건)</span></h2>
+          <h2 class="text-lg font-semibold">전체 작업 이력 <span class="text-sm text-slate-500 font-normal">({total}건 중 {offset + 1}–{offset + items.length} 표시)</span></h2>
           {isAdmin && (
             <a href="/rhksflwk/new" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm">+ 작업 등록</a>
           )}
@@ -271,13 +298,28 @@ publicRoutes.get('/', async (c) => {
           </div>
         )}
 
-        <nav class="flex justify-between items-center mt-4 text-sm">
-          {page > 1 ? (
-            <a href={`/${buildQs({ page: page - 1 })}`} class="px-3 py-1.5 rounded border border-slate-300 hover:bg-slate-50">← 이전</a>
-          ) : <span />}
-          {hasNext ? (
-            <a href={`/${buildQs({ page: page + 1 })}`} class="px-3 py-1.5 rounded border border-slate-300 hover:bg-slate-50">다음 →</a>
-          ) : <span />}
+        <nav class="flex justify-center items-center gap-1.5 mt-4 text-sm">
+          {safePage > 1 && (
+            <a href={`/${buildQs({ page: 1 })}`} title="처음" class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">«</a>
+          )}
+          {safePage > 1 && (
+            <a href={`/${buildQs({ page: safePage - 1 })}`} class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">‹</a>
+          )}
+          {pageItems(safePage, totalPages).map((p) =>
+            p === 'ellipsis' ? (
+              <span class="px-1 text-slate-400">…</span>
+            ) : p === safePage ? (
+              <span class="px-2.5 py-1.5 rounded bg-blue-600 text-white font-medium">{p}</span>
+            ) : (
+              <a href={`/${buildQs({ page: p })}`} class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">{p}</a>
+            ),
+          )}
+          {safePage < totalPages && (
+            <a href={`/${buildQs({ page: safePage + 1 })}`} class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">›</a>
+          )}
+          {safePage < totalPages && (
+            <a href={`/${buildQs({ page: totalPages })}`} title="마지막" class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">»</a>
+          )}
         </nav>
       </section>
     </Layout>,
