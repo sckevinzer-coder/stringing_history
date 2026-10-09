@@ -5,9 +5,12 @@ import { StringCard } from '../views/StringCard'
 import { getDb } from '../db/client'
 import { customers, rackets, stringJobs, strings } from '../db/schema'
 import { and, asc, count, desc, eq, gte, like, lte, or } from 'drizzle-orm'
-import { escapeHtml } from '../lib/validation'
+import { escapeHtml, requireString, numOrNull, toNumberOrNull, ValidationError } from '../lib/validation'
 import { STRING_CATEGORIES, formatManwon, categoryLabel } from '../lib/stringLabels'
-import { siteAuthMiddleware } from '../middleware/auth'
+import { siteAuthMiddleware, requestRateLimiter } from '../middleware/auth'
+import { requests as requestsTbl } from '../db/schema'
+import { RequestForm } from '../views/RequestForm'
+import { createRequestIssue } from '../lib/github'
 
 export const publicRoutes = new Hono<AppEnv>()
 
@@ -445,4 +448,142 @@ publicRoutes.get('/strings', async (c) => {
       )}
     </Layout>,
   )
+})
+// ----- 신청 폼 (작업 신청 / 구매 요청) -----
+publicRoutes.get('/apply', async (c) => {
+  const url = new URL(c.req.url)
+  const type = url.searchParams.get('type') === 'purchase' ? 'purchase' : 'job'
+  const presetStringId = numFromQuery(url.searchParams.get('string') ?? undefined)
+  const db = getDb(c.env.DB)
+  const stringRows = await db
+    .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge, remainingUses: strings.remainingUses })
+    .from(strings)
+    .orderBy(asc(strings.brand), asc(strings.name))
+    .all()
+  const isAdmin = c.get('isAdmin')
+  return c.html(
+    <Layout title={type === 'job' ? '작업 신청' : '스트링 구매 요청'} isAdmin={isAdmin} appName={c.env.APP_NAME}>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">{type === 'job' ? '작업 신청' : '스트링 구매 요청'}</h1>
+        <a href="/strings" class="text-sm text-slate-600 hover:text-blue-600">← 보유 스트링</a>
+      </div>
+      <RequestForm reqType={type} strings={stringRows} presetStringId={presetStringId} />
+    </Layout>,
+  )
+})
+
+publicRoutes.post('/apply', async (c) => {
+  // 스팸 방지: IP당 10회/10분
+  const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'unknown'
+  if (!(await requestRateLimiter.try(`apply:${ip}`))) {
+    return c.text('신청이 너무 많습니다. 잠시 후 다시 시도해주세요.', 429)
+  }
+  const body = await c.req.parseBody().catch(() => ({})) as Record<string, any>
+  try {
+    const db = getDb(c.env.DB)
+    const type = body.type === 'purchase' ? 'purchase' : 'job'
+    const customerName = requireString(body.customer_name, '이름')
+    const memo = body.memo ? String(body.memo).trim() || null : null
+
+    let stringId: number | null = null
+    let stringType: string | null = null
+    let stringLabel = ''
+    if (type === 'job') {
+      stringId = numOrNull(body.string_id)
+      if (stringId == null) throw new ValidationError('스트링을 선택하세요.')
+      const sRows = await db.select().from(strings).where(eq(strings.id, stringId)).all()
+      if (sRows.length === 0) throw new ValidationError('선택한 스트링을 찾을 수 없습니다.')
+      if (sRows[0].remainingUses === 0) throw new ValidationError('해당 스트링은 품절 상태입니다. 구매 요청을 이용해주세요.')
+      const s = sRows[0]
+      stringType = `${s.brand} ${s.name}${s.gauge ? ` ${s.gauge}` : ''}`
+      stringLabel = stringType
+    } else {
+      stringId = numOrNull(body.string_id)
+      const stringCustom = body.string_custom ? String(body.string_custom).trim() || null : null
+      if (stringId == null && !stringCustom) throw new ValidationError('스트링을 선택하거나 직접 입력하세요.')
+      if (stringId != null) {
+        const sRows = await db.select().from(strings).where(eq(strings.id, stringId)).all()
+        if (sRows.length === 0) throw new ValidationError('선택한 스트링을 찾을 수 없습니다.')
+        const s = sRows[0]
+        stringType = `${s.brand} ${s.name}${s.gauge ? ` ${s.gauge}` : ''}`
+        stringLabel = stringType
+      } else {
+        stringLabel = stringCustom!
+      }
+    }
+
+    const tensionMain = type === 'job' ? toNumberOrNull(body.tension_main) : null
+    if (type === 'job' && tensionMain == null) throw new ValidationError('메인 텐션을 입력하세요.')
+    const tensionCross = type === 'job' ? toNumberOrNull(body.tension_cross) : null
+    const racketModel = type === 'job' && body.racket_model ? String(body.racket_model).trim() || null : null
+    const jobDateRaw = type === 'job' && body.job_date ? String(body.job_date).trim() : ''
+    const jobDate = jobDateRaw ? (/^\d{4}-\d{2}-\d{2}$/.test(jobDateRaw) ? jobDateRaw : null) : null
+    if (type === 'job' && jobDateRaw && !jobDate) throw new ValidationError('희망 날짜 형식이 올바르지 않습니다.')
+    const stringCustom = type === 'purchase' && stringId == null
+      ? (body.string_custom ? String(body.string_custom).trim() || null : null)
+      : null
+
+    const ins = await db.insert(requestsTbl).values({
+      type,
+      customerName,
+      stringId,
+      stringType,
+      tensionMain,
+      tensionCross,
+      racketModel,
+      jobDate,
+      stringCustom,
+      memo,
+      status: 'new',
+    }).returning({ id: requestsTbl.id }).all()
+    const requestId = ins[0].id
+
+    // GitHub 이슈 자동 생성 (실패해도 신청은 유지)
+    const title = type === 'job'
+      ? `[작업신청] ${customerName} - ${stringLabel}`
+      : `[구매요청] ${customerName} - ${stringLabel}`
+    const lines = [
+      `신청 #${requestId} (${type === 'job' ? '작업 신청' : '구매 요청'})`,
+      `고객: ${customerName}`,
+      `스트링: ${stringLabel}`,
+    ]
+    if (type === 'job') {
+      lines.push(`텐션: ${tensionMain}${tensionCross != null ? ` / ${tensionCross}` : ''} lbs`)
+      if (racketModel) lines.push(`라켓: ${racketModel}`)
+      if (jobDate) lines.push(`희망 날짜: ${jobDate}`)
+    }
+    if (memo) lines.push(`메모: ${memo}`)
+    const issueNumber = await createRequestIssue(c.env.GITHUB_TOKEN, title, lines.join('\n'))
+    if (issueNumber != null) {
+      await db.update(requestsTbl).set({ issueNumber }).where(eq(requestsTbl.id, requestId)).run()
+    }
+
+    const isAdmin = c.get('isAdmin')
+    return c.html(
+      <Layout title="신청 접수" isAdmin={isAdmin} appName={c.env.APP_NAME}>
+        <div class="bg-white border border-slate-200 rounded-lg p-8 text-center">
+          <div class="text-4xl mb-3">✅</div>
+          <h1 class="text-xl font-semibold mb-2">신청이 접수되었습니다</h1>
+          <p class="text-sm text-slate-600 mb-1">{escapeHtml(customerName)}님, {escapeHtml(stringLabel)}{type === 'job' ? ` (${tensionMain} lbs)` : ''}</p>
+          <p class="text-sm text-slate-500 mb-4">확인 후 작업 일정을 안내해드리겠습니다.</p>
+          <div class="flex justify-center gap-2">
+            <a href="/strings" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50">보유 스트링으로</a>
+            <a href="/" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50">작업 이력으로</a>
+          </div>
+        </div>
+      </Layout>,
+    )
+  } catch (e: any) {
+    if (e instanceof ValidationError) {
+      const isAdmin = c.get('isAdmin')
+      return c.html(
+        <Layout title="신청" isAdmin={isAdmin} appName={c.env.APP_NAME}>
+          <div class="bg-red-50 border border-red-200 text-red-700 rounded px-3 py-2 mb-4 text-sm">{escapeHtml(e.message)}</div>
+          <a href="/strings" class="text-blue-600 hover:underline text-sm">← 보유 스트링으로 돌아가기</a>
+        </Layout>,
+        400,
+      )
+    }
+    return c.text('신청 접수 실패: 서버 오류가 발생했습니다.', 500)
+  }
 })

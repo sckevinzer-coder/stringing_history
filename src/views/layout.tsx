@@ -39,6 +39,8 @@ export const Layout: FC<{ children: any; title: string; isAdmin: boolean; appNam
             <nav class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <a href="/" class="text-slate-700 hover:text-blue-600">작업 이력</a>
               <a href="/strings" class="text-slate-700 hover:text-blue-600">보유 스트링</a>
+              <a href="/apply?type=job" class="text-slate-700 hover:text-blue-600">작업 신청</a>
+              <a href="/apply?type=purchase" class="text-slate-700 hover:text-blue-600">구매 요청</a>
               {isAdmin && <a href="/rhksflwk" class="text-slate-700 hover:text-blue-600">대시보드</a>}
               {isAdmin && <a href="/logout" class="text-red-600 hover:text-red-700">로그아웃</a>}
             </nav>

@@ -46,7 +46,7 @@ export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
           ? <div class="mt-1.5 inline-block text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5">잔여 {s.remainingUses}회</div>
           : <div class="mt-1.5 inline-block text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-0.5">품절</div>
       )}
-      <div class="mt-3">
+      <div class="mt-3 flex items-center gap-3">
         <button
           type="button"
           class="text-xs text-blue-600 hover:underline flex items-center gap-1"
@@ -54,6 +54,12 @@ export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
         >
           상세 ▼
         </button>
+        {s.remainingUses === 0 ? (
+          <span class="text-xs font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5 cursor-not-allowed" title="품절 상태입니다">신청 불가</span>
+        ) : (
+          <a href={`/apply?type=job&string=${s.id}`} class="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5 hover:bg-emerald-100">신청</a>
+        )}
+        <a href={`/apply?type=purchase&string=${s.id}`} class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5 hover:bg-amber-100">구매 요청</a>
       </div>
       <div id={domId} class="hidden mt-3 pt-3 border-t border-slate-100 text-sm">
         <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5">

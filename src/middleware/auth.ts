@@ -17,6 +17,7 @@ const VIEWER_SESSION_TTL_SECONDS = 60 * 60 * 24 // 1일 (요청 반영)
 // ---- 관리자 로그인 레이트 리밋 ----
 import { RATE_LIMIT } from '../lib/rateLimit'
 export const loginRateLimiter = RATE_LIMIT.create(undefined, 5, 60_000) // KV 없어도 graceful 동작 (5회/60초)
+export const requestRateLimiter = RATE_LIMIT.create(undefined, 10, 10 * 60_000) // 공개 신청 스팸 방지 (10회/10분)
 
 // ---- 뷰어 인증 토큰 (비밀번호 원문 대신 HMAC 파생 토큰을 쿠키에 저장) ----
 // 토큰 = HMAC-SHA256(key=VIEWER_PASSWORD, msg="viewer-site-auth-v1")
