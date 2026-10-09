@@ -7,4 +7,5 @@ interface Env {
   APP_NAME: string
   SESSION_COOKIE_NAME: string
   SESSION_TTL_SECONDS: string
+  GITHUB_TOKEN: string
 }

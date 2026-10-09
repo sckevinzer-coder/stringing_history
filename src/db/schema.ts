@@ -71,9 +71,31 @@ export const sessions = sqliteTable('sessions', {
   expIdx: index('idx_sessions_expires_at').on(t.expiresAt),
 }))
 
+export const requests = sqliteTable('requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  type: text('type').notNull(),
+  customerName: text('customer_name').notNull(),
+  stringId: integer('string_id').references(() => strings.id, { onDelete: 'set null' }),
+  stringType: text('string_type'),
+  tensionMain: real('tension_main'),
+  tensionCross: real('tension_cross'),
+  racketModel: text('racket_model'),
+  jobDate: text('job_date'),
+  stringCustom: text('string_custom'),
+  memo: text('memo'),
+  status: text('status').notNull().default('new'),
+  issueNumber: integer('issue_number'),
+  createdAt: text('created_at').notNull().default("datetime('now')"),
+}, (t) => ({
+  statusIdx: index('idx_requests_status').on(t.status),
+  typeIdx: index('idx_requests_type').on(t.type),
+}))
+
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
 export type Racket = typeof rackets.$inferSelect
 export type NewRacket = typeof rackets.$inferInsert
 export type StringJob = typeof stringJobs.$inferSelect
 export type NewStringJob = typeof stringJobs.$inferInsert
+export type StringRequest = typeof requests.$inferSelect
+export type NewStringRequest = typeof requests.$inferInsert
