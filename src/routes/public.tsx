@@ -10,7 +10,7 @@ import { STRING_CATEGORIES, formatManwon, categoryLabel } from '../lib/stringLab
 import { siteAuthMiddleware, requestRateLimiter } from '../middleware/auth'
 import { requests as requestsTbl } from '../db/schema'
 import { RequestForm } from '../views/RequestForm'
-import { createRequestIssue } from '../lib/github'
+import { dispatchRequestEvent } from '../lib/github'
 
 export const publicRoutes = new Hono<AppEnv>()
 
@@ -538,25 +538,19 @@ publicRoutes.post('/apply', async (c) => {
     }).returning({ id: requestsTbl.id }).all()
     const requestId = ins[0].id
 
-    // GitHub 이슈 자동 생성 (실패해도 신청은 유지)
-    const title = type === 'job'
-      ? `[작업신청] ${customerName} - ${stringLabel}`
-      : `[구매요청] ${customerName} - ${stringLabel}`
-    const lines = [
-      `신청 #${requestId} (${type === 'job' ? '작업 신청' : '구매 요청'})`,
-      `고객: ${customerName}`,
-      `스트링: ${stringLabel}`,
-    ]
-    if (type === 'job') {
-      lines.push(`텐션: ${tensionMain}${tensionCross != null ? ` / ${tensionCross}` : ''} lbs`)
-      if (racketModel) lines.push(`라켓: ${racketModel}`)
-      if (jobDate) lines.push(`희망 날짜: ${jobDate}`)
-    }
-    if (memo) lines.push(`메모: ${memo}`)
-    const issueNumber = await createRequestIssue(c.env.GITHUB_TOKEN, title, lines.join('\n'))
-    if (issueNumber != null) {
-      await db.update(requestsTbl).set({ issueNumber }).where(eq(requestsTbl.id, requestId)).run()
-    }
+    // GitHub dispatch 발송 → Actions가 bot 명의로 이슈 생성 (실패해도 신청은 유지)
+    // issue_number는 Actions에서 알 수 없어 NULL 유지 (이슈 제목의 신청 #id로 대조)
+    await dispatchRequestEvent(c.env.GITHUB_TOKEN, {
+      request_id: requestId,
+      type,
+      customer_name: customerName,
+      string_label: stringLabel,
+      tension_main: tensionMain,
+      tension_cross: tensionCross,
+      racket_model: racketModel,
+      job_date: jobDate,
+      memo,
+    })
 
     const isAdmin = c.get('isAdmin')
     return c.html(

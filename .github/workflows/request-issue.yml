@@ -1,0 +1,51 @@
+name: Create request issue
+
+# 워커의 repository_dispatch(string-request)를 받아 bot 명의로 이슈 생성.
+# bot 명의라 Watch 중인 관리자에게 알림 메일이 정상 발송된다.
+# (워커가 직접 만들면 본인 명의라 메일이 suppress됨)
+
+on:
+  repository_dispatch:
+    types: [string-request]
+
+permissions:
+  issues: write
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create issue from payload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQ_TYPE: ${{ github.event.client_payload.type }}
+          REQ_ID: ${{ github.event.client_payload.request_id }}
+          CUSTOMER: ${{ github.event.client_payload.customer_name }}
+          STRING_LABEL: ${{ github.event.client_payload.string_label }}
+          TENSION_MAIN: ${{ github.event.client_payload.tension_main }}
+          TENSION_CROSS: ${{ github.event.client_payload.tension_cross }}
+          RACKET: ${{ github.event.client_payload.racket_model }}
+          JOB_DATE: ${{ github.event.client_payload.job_date }}
+          MEMO: ${{ github.event.client_payload.memo }}
+        run: |
+          if [ "$REQ_TYPE" = "job" ]; then
+            TITLE="[작업신청 #$REQ_ID] $CUSTOMER - $STRING_LABEL"
+            KIND="작업 신청"
+          else
+            TITLE="[구매요청 #$REQ_ID] $CUSTOMER - $STRING_LABEL"
+            KIND="구매 요청"
+          fi
+          {
+            echo "신청 #$REQ_ID ($KIND)"
+            echo "고객: $CUSTOMER"
+            echo "스트링: $STRING_LABEL"
+            if [ "$REQ_TYPE" = "job" ]; then
+              LINE="텐션: $TENSION_MAIN"
+              [ -n "$TENSION_CROSS" ] && LINE="$LINE / $TENSION_CROSS"
+              echo "${LINE} lbs"
+              [ -n "$RACKET" ] && echo "라켓: $RACKET"
+              [ -n "$JOB_DATE" ] && echo "희망 날짜: $JOB_DATE"
+            fi
+            [ -n "$MEMO" ] && echo "메모: $MEMO"
+          } > /tmp/body.txt
+          gh issue create --title "$TITLE" --body-file /tmp/body.txt
