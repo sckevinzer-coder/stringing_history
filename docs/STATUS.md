@@ -375,6 +375,7 @@
 - ⚠️ 남은 수동 작업: `GITHUB_TOKEN` 시크릿 등록 + GitHub 알림 메일 설정(Watch → Issues) + 테스트 신청 1건으로 이슈/메일 확인
 - 트러블슈팅 (2026-10-09): 첫 테스트에서 이슈 생성 403 — 원인은 GitHub API의 `User-Agent` 헤더 필수 요구. `src/lib/github.ts`에 헤더 추가 후 해결. 토큰(`github_pat_`)·권한 설정은 정상이었음
 - 알림 방식 전환 (2026-10-09, A안): 본인 명의 이슈는 알림 메일 suppress → 워커가 `repository_dispatch` 발송 후 Actions(`request-issue.yml`)가 bot 명의로 이슈 생성. 토큰에 Contents 읽기/쓰기 권한 필요. `issue_number`는 워커에서 알 수 없어 NULL 유지 (이슈 제목의 신청 #id로 대조)
+- 전환 후 트러블슈팅: `gh issue create`가 git 저장소 없이 실패 → `-R` 플래그로 저장소 명시 후 해결. bot 명의 이슈(#2~) 생성 확인
 
 ## 완료로 정리 (백로그에서 제거)
 
