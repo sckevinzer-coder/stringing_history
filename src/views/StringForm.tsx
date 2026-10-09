@@ -12,6 +12,7 @@ type StringValues = {
   tensionLossPct?: number | null
   spinPotential?: number | null
   cost?: number | null
+  remainingUses?: number | null
   memo?: string | null
 }
 
@@ -27,7 +28,7 @@ export const StringForm: FC<{
     brand: '', name: '', category: 'polyester',
     shape: null, gauge: '', color: null,
     stiffnessRa: null, tensionLossPct: null, spinPotential: null,
-    cost: null, memo: null,
+    cost: null, remainingUses: null, memo: null,
   }
   const action = isEdit ? `/rhksflwk/strings/${editId}/edit` : '/rhksflwk/strings'
   return (
@@ -96,6 +97,10 @@ export const StringForm: FC<{
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">스트링 비용 (원) <span class="text-xs text-slate-500">(공임비 포함 총액)</span></span>
           <input type="number" step="100" name="cost" value={v.cost ?? ''} class="border border-slate-300 rounded px-3 py-2" />
+        </label>
+        <label class="flex flex-col text-sm">
+          <span class="text-slate-600 mb-1">남은 횟수 (회) <span class="text-xs text-slate-500">(비우면 미관리 · 작업 등록 시 자동 차감)</span></span>
+          <input type="number" step="1" min="0" name="remaining_uses" value={v.remainingUses ?? ''} placeholder="예: 10" class="border border-slate-300 rounded px-3 py-2" />
         </label>
         <div />
 

@@ -103,9 +103,30 @@ export const sessionMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
     if (await isValidSession(c.env.DB, sid)) {
       c.set('isAdmin', true)
       c.set('sessionId', sid)
+      // 슬라이딩 만료: 활동이 있으면 만료시각을 +TTL 연장하고 쿠키도 재발급
+      // (로그인/로그아웃 요청은 제외 — 해당 핸들러가 쿠키를 직접 다룸)
+      const p = c.req.path
+      if (!p.endsWith('/login') && !p.endsWith('/logout')) {
+        const ttl = Number(c.env.SESSION_TTL_SECONDS ?? '1800')
+        await touchSession(c.env.DB, sid, ttl)
+        const secure = new URL(c.req.url).protocol === 'https:'
+        c.header('Set-Cookie', buildCookie(c.env.SESSION_COOKIE_NAME, sid, {
+          maxAge: ttl,
+          httpOnly: true,
+          secure,
+          sameSite: 'Lax',
+        }))
+      }
     }
   }
   await next()
+}
+
+// 세션 만료시각을 지금부터 +ttl초로 연장
+async function touchSession(d1: D1Database, sid: string, ttl: number) {
+  const db = getDb(d1)
+  const exp = new Date(Date.now() + ttl * 1000).toISOString().slice(0, 19).replace('T', ' ')
+  await db.update(sessions).set({ expiresAt: exp }).where(eq(sessions.id, sid)).run()
 }
 
 // 진짜 관리자 인증 - admin 라우트는 반드시 이 미들웨어를 써야 합니다.

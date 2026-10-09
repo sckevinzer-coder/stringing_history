@@ -30,8 +30,8 @@ stringsRoutes.get('/', async (c) => {
   const q = (url.searchParams.get('q') ?? '').trim()
   const category = (url.searchParams.get('category') ?? '').trim() || null
 
-  type SortKey = 'brand' | 'name' | 'category' | 'gauge' | 'color' | 'shape' | 'stiffnessRa' | 'tensionLossPct' | 'spinPotential' | 'cost'
-  const SORTABLE: SortKey[] = ['brand', 'name', 'category', 'gauge', 'color', 'shape', 'stiffnessRa', 'tensionLossPct', 'spinPotential', 'cost']
+  type SortKey = 'brand' | 'name' | 'category' | 'gauge' | 'color' | 'shape' | 'stiffnessRa' | 'tensionLossPct' | 'spinPotential' | 'cost' | 'remainingUses'
+  const SORTABLE: SortKey[] = ['brand', 'name', 'category', 'gauge', 'color', 'shape', 'stiffnessRa', 'tensionLossPct', 'spinPotential', 'cost', 'remainingUses']
   const sort = (url.searchParams.get('sort') ?? '') as SortKey
   const sortOrder = url.searchParams.get('order') === 'desc' ? 'desc' : 'asc'
   const isValidSort = (s: string): s is SortKey => SORTABLE.includes(s as SortKey)
@@ -59,6 +59,7 @@ stringsRoutes.get('/', async (c) => {
       case 'tensionLossPct': return [dir(stringsTbl.tensionLossPct), asc(stringsTbl.name)]
       case 'spinPotential': return [dir(stringsTbl.spinPotential), asc(stringsTbl.name)]
       case 'cost': return [dir(stringsTbl.cost), asc(stringsTbl.name)]
+      case 'remainingUses': return [dir(stringsTbl.remainingUses), asc(stringsTbl.name)]
       case 'name':
       default: return [dir(stringsTbl.name), asc(stringsTbl.brand)]
     }
@@ -153,6 +154,7 @@ stringsRoutes.get('/', async (c) => {
                 {sortableHeader('tensionLossPct', '텐션 로스 (%)', 'right')}
                 {sortableHeader('spinPotential', '스핀', 'right')}
                 {sortableHeader('cost', '비용', 'right')}
+                {sortableHeader('remainingUses', '남은횟수', 'right')}
                 <th class="text-right px-3 py-2">관리</th>
               </tr>
             </thead>
@@ -170,6 +172,7 @@ stringsRoutes.get('/', async (c) => {
                   <td class="px-3 py-2 text-right">{r.tensionLossPct != null ? r.tensionLossPct : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.spinPotential != null ? r.spinPotential : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.cost != null ? `₩${r.cost.toLocaleString('ko-KR')}` : '-'}</td>
+                  <td class="px-3 py-2 text-right">{r.remainingUses != null ? (r.remainingUses === 0 ? <span class="text-red-600 font-semibold">0</span> : r.remainingUses) : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     <a href={`/rhksflwk/strings/${r.id}/edit`} class="text-blue-600 hover:underline">수정</a>
                     <form method="post" action={`/rhksflwk/strings/${r.id}/delete`} class="inline" onsubmit="return confirm('이 스트링을 삭제하시겠습니까?')">
@@ -298,6 +301,13 @@ function parseStringBody(body: Record<string, any>) {
     tensionLossPct: toNumberOrNull(body.tension_loss_pct),
     spinPotential: numOrNull(body.spin_potential),
     cost: toNumberOrNull(body.cost),
+    remainingUses: intOrNull(body.remaining_uses),
     memo: body.memo ? String(body.memo).trim() || null : null,
   }
+}
+
+function intOrNull(v: unknown): number | null {
+  const n = numOrNull(v)
+  if (n == null) return null
+  return Math.max(0, Math.trunc(n))
 }

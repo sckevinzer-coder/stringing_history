@@ -10,6 +10,7 @@ import { asc, desc, eq, count, inArray } from 'drizzle-orm'
 import { escapeHtml, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
 import { sessions } from '../db/schema'
 import { buildCookie } from '../lib/auth'
+import { consumeStringUse, restoreStringUse } from '../lib/stringUsage'
 
 // Toast 리다이렉트 헬퍼
 function toastRedirect(path: string, msg: string, type: 'success' | 'error' = 'success') {
@@ -71,14 +72,15 @@ adminRoutes.post('/login', async (c) => {
     // 성공 시 실패 카운터 리셋
     await loginRateLimiter.reset(`admin:${adminId}`)
     const sid = crypto.randomUUID()
-    const exp = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
+    const ttl = Number(c.env.SESSION_TTL_SECONDS ?? '1800')
+    const exp = new Date(Date.now() + ttl * 1000).toISOString().slice(0, 19).replace('T', ' ')
     const db = getDb(c.env.DB)
     // 단일 세션 정책: 새 로그인 시 기존 세션을 모두 무효화 (다른 기기 로그아웃)
     await db.delete(sessions).run()
     await db.insert(sessions).values({ id: sid, expiresAt: exp }).run()
     const secure = new URL(c.req.url).protocol === 'https:'
     const cookie = buildCookie(c.env.SESSION_COOKIE_NAME, sid, {
-      maxAge: 600,
+      maxAge: ttl,
       httpOnly: true,
       secure,
       sameSite: 'Lax',
@@ -571,11 +573,11 @@ adminRoutes.get('/new', async (c) => {
     : []
 
   const masterStringsRaw = await db
-    .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge })
+    .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge, remainingUses: strings.remainingUses })
     .from(strings)
     .orderBy(asc(strings.brand), asc(strings.name))
     .all()
-  const masterStrings = masterStringsRaw.map((m) => ({ id: m.id, brand: m.brand, name: m.name, gauge: m.gauge }))
+  const masterStrings = masterStringsRaw.map((m) => ({ id: m.id, brand: m.brand, name: m.name, gauge: m.gauge, remainingUses: m.remainingUses }))
 
   const effectivePresetCustomerName = copyJob?.customerName ?? null
   const copyToday = new Date().toISOString().slice(0, 10)
@@ -675,6 +677,7 @@ adminRoutes.post('/new', async (c) => {
       memo: body.memo ? String(body.memo).trim() || null : null,
     }
     await db.insert(stringJobs).values(insert).run()
+    await consumeStringUse(db, insert.stringId)
     return toastRedirect('/rhksflwk', '작업이 등록되었습니다.')
   } catch (e: any) {
     if (e instanceof ValidationError) {
@@ -737,11 +740,11 @@ adminRoutes.get('/edit/:id', async (c) => {
   const rackList = allRacketsByCustomer[String(job.customerId)] ?? []
 
   const masterStringsRaw = await db
-    .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge })
+    .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge, remainingUses: strings.remainingUses })
     .from(strings)
     .orderBy(asc(strings.brand), asc(strings.name))
     .all()
-  const masterStrings = masterStringsRaw.map((m) => ({ id: m.id, brand: m.brand, name: m.name, gauge: m.gauge }))
+  const masterStrings = masterStringsRaw.map((m) => ({ id: m.id, brand: m.brand, name: m.name, gauge: m.gauge, remainingUses: m.remainingUses }))
 
   return c.html(
     <Layout title="작업 수정" isAdmin={true} appName={c.env.APP_NAME}>
@@ -782,6 +785,9 @@ adminRoutes.post('/edit/:id', async (c) => {
   const body = await c.req.parseBody().catch(() => ({})) as Record<string, any>
   try {
     const db = getDb(c.env.DB)
+    const oldRows = await db.select({ stringId: stringJobs.stringId }).from(stringJobs).where(eq(stringJobs.id, id)).all()
+    if (oldRows.length === 0) return c.notFound()
+    const oldStringId = oldRows[0].stringId
     const racketId = numOrNull(body.racket_id)
     if (!racketId) throw new ValidationError('라켓을 선택하세요.')
     const r = await db.select({ id: rackets.id }).from(rackets).where(eq(rackets.id, racketId)).all()
@@ -805,6 +811,10 @@ adminRoutes.post('/edit/:id', async (c) => {
     }
     const res = await db.update(stringJobs).set(update).where(eq(stringJobs.id, id)).returning().all()
     if (res.length === 0) return c.notFound()
+    if (oldStringId !== update.stringId) {
+      await restoreStringUse(db, oldStringId)
+      await consumeStringUse(db, update.stringId)
+    }
     return toastRedirect('/rhksflwk', '작업이 수정되었습니다.')
   } catch (e: any) {
     if (e instanceof ValidationError) {
@@ -851,6 +861,7 @@ adminRoutes.post('/jobs/:id/duplicate', async (c) => {
     price: src.price,
     memo: src.memo,
   }).run()
+  await consumeStringUse(db, src.stringId)
   return toastRedirect('/rhksflwk', `빠른등록 완료 (${today}) — 고객/라켓/스트링은 그대로 복사되었습니다.`)
 })
 
@@ -859,6 +870,9 @@ adminRoutes.post('/jobs/:id/delete', async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return c.notFound()
   const db = getDb(c.env.DB)
+  const target = await db.select({ stringId: stringJobs.stringId }).from(stringJobs).where(eq(stringJobs.id, id)).all()
+  if (target.length === 0) return c.notFound()
   await db.delete(stringJobs).where(eq(stringJobs.id, id)).run()
+  await restoreStringUse(db, target[0].stringId)
   return toastRedirect('/rhksflwk', '작업이 삭제되었습니다.')
 })

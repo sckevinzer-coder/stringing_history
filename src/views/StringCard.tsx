@@ -22,6 +22,7 @@ export type StringCardData = {
   tensionLossPct?: number | null
   spinPotential?: number | null
   cost?: number | null
+  remainingUses?: number | null
 }
 
 export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
@@ -40,6 +41,11 @@ export const StringCard: FC<{ s: StringCardData }> = ({ s }) => {
         </div>
       </div>
       <div class="mt-2 text-sm text-slate-600">{summaryLine({ gauge: s.gauge ?? null, category: s.category, color: s.color ?? null, shape: s.shape ?? null })}</div>
+      {s.remainingUses != null && (
+        s.remainingUses > 0
+          ? <div class="mt-1.5 inline-block text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5">잔여 {s.remainingUses}회</div>
+          : <div class="mt-1.5 inline-block text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-0.5">품절</div>
+      )}
       <div class="mt-3">
         <button
           type="button"

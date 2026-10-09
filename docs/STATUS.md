@@ -328,6 +328,30 @@
 - `STRING_CATEGORIES`에서 `makjul` 제거 (다시 5개)
 - 변경 파일: `src/routes/strings.tsx`, `src/lib/stringLabels.ts`
 
+## 완료 (Phase 5-17) — 스트링 남은 횟수 관리 (2026-10-08)
+
+- `strings.remaining_uses INTEGER NULL` 추가 (마이그레이션 `0005`, NULL = 미관리/미표시)
+- 관리자 스트링 등록/수정 폼에 "남은 횟수" 입력란 (`StringForm`), 목록에 "남은횟수" 정렬 컬럼 (0이면 빨강) — `src/routes/strings.tsx`
+- 작업 등록(일반/빠른등록/API) 시 `string_id` 있으면 -1 (0 미만 방지, NULL 스킵), 삭제 시 +1 복원, 수정에서 스트링 변경 시 기존 복원 + 신규 차감 — `src/lib/stringUsage.ts` (`consumeStringUse`/`restoreStringUse`), `src/routes/admin.tsx`, `src/routes/api.ts`
+- 작업 등록 폼 스트링 선택 시 잔여 횟수 힌트 표시 ("잔여 N회 (등록 시 1회 차감)" / 품절 경고) — `src/views/JobForm.tsx`
+- 공개 보유 스트링 카드에 "잔여 N회" 뱃지 (0이면 "품절") — `src/views/StringCard.tsx`
+- 로컬/운영 마이그레이션 적용 + 배포 완료
+
+## 완료 (Phase 5-18) — 남은 횟수 역산 백필 (2026-10-08)
+
+- 작업 이력으로 `remaining_uses` 일괄 역산 후 운영 DB에 UPDATE (24종, rows_written 24)
+- 계산식: 릴 길이(기본 200m, Toroline 5종·커시바움은 100m) − 사용m(작업별 컷길이 실측×27in 0.6858m, 미기록은 표준 8.3/7.5) → floor(남은m ÷ 10.84m), 0 미만은 0
+- 결과 예: Tour Bite 0회, Focus HEX 6회, AluPower Rough 7회, 미사용 2종 18회
+- 한계: string_id 미매칭 작업 60건 제외, 릴 교체 이력 미반영 → 근사치. 이후 작업 등록/삭제 시 자동 증감으로 유지
+
+## 완료 (Phase 5-19) — 관리자 세션 슬라이딩 만료 (2026-10-09)
+
+- 증상: 작업 중 10분 지나면 다음 동작 시 로그인 페이지로 튐 (절대 만료, 활동해도 연장 안 됨)
+- 수정: 요청마다 만료시각 +TTL 연장 + 쿠키 재발급 (`touchSession`, 로그인/로그아웃 경로 제외) — `src/middleware/auth.ts`
+- TTL 10분 → 30분: `SESSION_TTL_SECONDS=1800`, `/rhksflwk/login`도 env TTL 사용 (하드코딩 제거) — `src/routes/admin.tsx`, `wrangler.toml`
+- 로컬 검증: 유효 세션 요청 시 200 + Set-Cookie(Max-Age=1800) + expires_at 30분 연장 확인, 만료 세션은 302 로그인 리다이렉트 유지
+- 단일 세션 정책(다른 곳 로그인 시 기존 무효화)은 유지
+
 ## 다음 할 일 (Phase 이후 — 우선순위 낮음)
 
 - [ ] 작업 이력 테이블에서 string_type 옆에 마스터 카테고리(폴리/천연거트 등) 뱃지 표시

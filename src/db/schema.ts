@@ -34,6 +34,7 @@ export const strings = sqliteTable('strings', {
   spinPotential: real('spin_potential'),
   cost: real('cost'),
   laborCost: real('labor_cost').notNull().default(10000),
+  remainingUses: integer('remaining_uses'),
   memo: text('memo'),
   createdAt: text('created_at').notNull().default("datetime('now')"),
 }, (t) => ({

@@ -30,7 +30,7 @@ app.get('/login', (c) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>사이트 접속 - 테니스</title>
+  <title>사이트 접속 - 스트링노트</title>
   <script src="https://cdn.tailwindcss.com"><\/script>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
@@ -42,7 +42,7 @@ app.get('/login', (c) => {
             <circle cx="12" cy="12" r="9" />
             <path d="M7.5 9.5c2 1.5 2 4.7 4.5 6.5M16.5 9.5c-2 1.5-2 4.7-4.5 6.5" stroke-linecap="round"/>
           </svg>
-          <h1 class="text-lg font-semibold">사이트 접속</h1>
+          <h1 class="text-lg font-semibold">스트링노트</h1>
         </div>
       </div>
       <div class="px-6 py-5">
@@ -75,7 +75,7 @@ app.get('/login', (c) => {
           </button>
         </form>
         <p class="mt-4 text-xs text-slate-500 text-center">
-          이 사이트는 비밀번호로 보호되어 있습니다.
+          스트링 작업 이력 조회 서비스입니다. 비밀번호로 보호되어 있습니다.
         </p>
       </div>
     </div>

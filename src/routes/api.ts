@@ -13,6 +13,7 @@ import {
   ValidationError,
   escapeLike,
 } from '../lib/validation'
+import { consumeStringUse, restoreStringUse } from '../lib/stringUsage'
 
 export const api = new Hono<AppEnv>()
 
@@ -199,6 +200,7 @@ api.post('/jobs', requireAdmin, async (c) => {
       memo: body.memo == null ? null : String(body.memo).trim() || null,
     }
     const result = await db.insert(stringJobs).values(insert).returning().all()
+    await consumeStringUse(db, insert.stringId)
     return c.json(result[0], 201)
   } catch (e: any) {
         if (e instanceof ValidationError) return jsonError(e.message, 400)
@@ -212,6 +214,10 @@ api.put('/jobs/:id', requireAdmin, async (c) => {
     if (!Number.isFinite(id)) return jsonError('잘못된 id')
     const body = await c.req.json().catch(() => ({}))
     const db = getDb(c.env.DB)
+
+    const oldRows = await db.select({ stringId: stringJobs.stringId }).from(stringJobs).where(eq(stringJobs.id, id)).all()
+    if (oldRows.length === 0) return jsonError('작업을 찾을 수 없습니다.', 404)
+    const oldStringId = oldRows[0].stringId
 
     const stringType = requireString(body.string_type, '스트링 종류')
     const jobDate = toDateOrThrow(body.job_date, '작업일')
@@ -230,6 +236,10 @@ api.put('/jobs/:id', requireAdmin, async (c) => {
     }
     const result = await db.update(stringJobs).set(update).where(eq(stringJobs.id, id)).returning().all()
     if (result.length === 0) return jsonError('작업을 찾을 수 없습니다.', 404)
+    if (oldStringId !== update.stringId) {
+      await restoreStringUse(db, oldStringId)
+      await consumeStringUse(db, update.stringId)
+    }
     return c.json(result[0])
   } catch (e: any) {
         if (e instanceof ValidationError) return jsonError(e.message, 400)
@@ -241,8 +251,9 @@ api.delete('/jobs/:id', requireAdmin, async (c) => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return jsonError('잘못된 id')
   const db = getDb(c.env.DB)
-  const result = await db.delete(stringJobs).where(eq(stringJobs.id, id)).returning({ id: stringJobs.id }).all()
+  const result = await db.delete(stringJobs).where(eq(stringJobs.id, id)).returning({ id: stringJobs.id, stringId: stringJobs.stringId }).all()
   if (result.length === 0) return jsonError('작업을 찾을 수 없습니다.', 404)
+  await restoreStringUse(db, result[0].stringId)
   return c.json({ ok: true, id })
 })
 

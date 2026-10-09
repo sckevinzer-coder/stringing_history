@@ -30,7 +30,7 @@ export const JobForm: FC<{
   presetCustomerName?: string | null
   presetRackets: RacketLite[]
   allRacketsByCustomer?: Record<number, RacketLite[]>
-  masterStrings?: { id: number; brand: string; name: string; gauge: string | null }[]
+  masterStrings?: { id: number; brand: string; name: string; gauge: string | null; remainingUses?: number | null }[]
   isEdit: boolean
   editId?: number
   values?: JobValues
@@ -105,11 +105,12 @@ export const JobForm: FC<{
           <input id="string_type" name="string_type" required list="string-master-list" value={v.stringType} placeholder="예: Wilson Natural Gut 16" class="border border-slate-300 rounded px-3 py-2" />
           <datalist id="string-master-list">
             {(masterStrings ?? []).map((m) => (
-              <option value={`${m.brand} ${m.name}${m.gauge ? ` ${m.gauge}` : ''}`} data-string-id={m.id}>{escapeHtml(m.brand)} {escapeHtml(m.name)}{m.gauge ? ` ${escapeHtml(m.gauge)}` : ''}</option>
+              <option value={`${m.brand} ${m.name}${m.gauge ? ` ${m.gauge}` : ''}`} data-string-id={m.id} data-remaining={m.remainingUses ?? ''}>{escapeHtml(m.brand)} {escapeHtml(m.name)}{m.gauge ? ` ${escapeHtml(m.gauge)}` : ''}</option>
             ))}
           </datalist>
           <input type="hidden" name="string_id" id="string_id" value={v.stringId ?? ''} />
           <span id="string-match-info" class="text-xs text-blue-600 mt-1 hidden">✓ 보유 스트링에서 선택됨</span>
+          <span id="string-remaining-info" class="text-xs text-emerald-700 mt-1 hidden"></span>
         </label>
 
         <label class="flex flex-col text-sm">
@@ -160,11 +161,14 @@ export const JobForm: FC<{
             var stInput = document.getElementById('string_type');
             var sidInput = document.getElementById('string_id');
             var matchInfo = document.getElementById('string-match-info');
+            var remainingInfo = document.getElementById('string-remaining-info');
             var list = document.getElementById('string-master-list');
             if (stInput && sidInput && list) {
               var map = {};
+              var remainingMap = {};
               Array.prototype.forEach.call(list.querySelectorAll('option[data-string-id]'), function (opt) {
                 map[opt.getAttribute('value')] = opt.getAttribute('data-string-id');
+                remainingMap[opt.getAttribute('value')] = opt.getAttribute('data-remaining');
               });
               function sync(){
                 var val = stInput.value.trim();
@@ -174,6 +178,16 @@ export const JobForm: FC<{
                 } else {
                   sidInput.value = '';
                   if (matchInfo) matchInfo.classList.add('hidden');
+                }
+                var rem = remainingMap[val];
+                if (remainingInfo) {
+                  if (rem != null && rem !== '') {
+                    var n = Number(rem);
+                    remainingInfo.textContent = n === 0 ? '⚠ 이 스트링은 품절 상태입니다' : ('잔여 ' + rem + '회 (등록 시 1회 차감)');
+                    remainingInfo.classList.remove('hidden');
+                  } else {
+                    remainingInfo.classList.add('hidden');
+                  }
                 }
               }
               stInput.addEventListener('input', sync);
@@ -204,6 +218,7 @@ export const JobForm: FC<{
             }
             function update(){
               var cid = customerSel.value;
+              var prevSelected = racketSel.value;
               // 키 매칭을 여러 형태로 시도
               var list = data[cid] || data[Number(cid)] || data[String(cid)] || [];
               try {
@@ -216,6 +231,7 @@ export const JobForm: FC<{
                 var opt = document.createElement('option');
                 opt.value = String(r.id);
                 opt.textContent = fmt(r);
+                if (String(r.id) === String(prevSelected)) opt.selected = true;
                 racketSel.appendChild(opt);
               }
               if (list.length === 0 && cid) {
