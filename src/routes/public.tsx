@@ -230,7 +230,7 @@ publicRoutes.get('/', async (c) => {
             <span class="text-slate-600 mb-1">작업일 (까지)</span>
             <input type="date" name="date_to" value={escapeHtml(dateTo)} class="border border-slate-300 rounded px-3 py-2" />
           </label>
-          <label class="md:col-span-2 flex flex-col text-sm">
+          <label class="hidden md:flex md:col-span-2 flex-col text-sm">
             <span class="text-slate-600 mb-1">텐션 범위 (lbs)</span>
             <div class="flex gap-2 items-center">
               <input type="number" step="0.5" name="tension_min" value={tensionMin ?? ''} placeholder="최소" class="w-full border border-slate-300 rounded px-3 py-2" />
