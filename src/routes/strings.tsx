@@ -11,6 +11,7 @@ import {
   STRING_CATEGORIES,
   STRING_SHAPES,
   STRING_COLORS,
+  formatManwon,
 } from '../lib/stringLabels'
 
 // Toast 리다이렉트 헬퍼
@@ -140,7 +141,7 @@ stringsRoutes.get('/', async (c) => {
         </div>
       ) : (
                 <div class="bg-white border border-slate-200 rounded-lg overflow-x-auto">
-          <table class="min-w-full text-sm">
+          <table class="data-table min-w-full text-xs sm:text-sm">
                         <thead class="bg-slate-100 text-slate-700">
               <tr>
                 <th class="text-left px-3 py-2">ID</th>
@@ -171,7 +172,7 @@ stringsRoutes.get('/', async (c) => {
                   <td class="px-3 py-2 text-right">{r.stiffnessRa != null ? r.stiffnessRa : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.tensionLossPct != null ? r.tensionLossPct : '-'}</td>
                   <td class="px-3 py-2 text-right">{r.spinPotential != null ? r.spinPotential : '-'}</td>
-                  <td class="px-3 py-2 text-right">{r.cost != null ? `₩${r.cost.toLocaleString('ko-KR')}` : '-'}</td>
+                  <td class="px-3 py-2 text-right">{formatManwon(r.cost)}</td>
                   <td class="px-3 py-2 text-right">{r.remainingUses != null ? (r.remainingUses === 0 ? <span class="text-red-600 font-semibold">0</span> : r.remainingUses) : '-'}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     <a href={`/rhksflwk/strings/${r.id}/edit`} class="text-blue-600 hover:underline">수정</a>

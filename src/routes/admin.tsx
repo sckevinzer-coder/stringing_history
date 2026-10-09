@@ -172,7 +172,7 @@ adminRoutes.get('/', async (c) => {
         </div>
       ) : (
         <div class="overflow-x-auto bg-white border border-slate-200 rounded-lg">
-          <table class="min-w-full text-sm">
+          <table class="data-table min-w-full text-xs sm:text-sm">
             <thead class="bg-slate-100 text-slate-700">
               <tr>
                 <th class="text-left px-3 py-2">작업일</th>
@@ -180,7 +180,7 @@ adminRoutes.get('/', async (c) => {
                 <th class="text-left px-3 py-2">라켓 (헤드 / 패턴)</th>
                 <th class="text-left px-3 py-2">스트링</th>
                 <th class="text-right px-3 py-2">텐션 (m/c)</th>
-                <th class="text-right px-3 py-2">컷 길이</th>
+                <th class="hidden md:table-cell text-right px-3 py-2">컷 길이</th>
                 <th class="text-right px-3 py-2">비용</th>
                 <th class="text-right px-3 py-2">관리</th>
               </tr>
@@ -203,7 +203,7 @@ adminRoutes.get('/', async (c) => {
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     {j.tensionMain ?? '-'}{j.tensionCross != null ? ` / ${j.tensionCross}` : ''}
                   </td>
-                  <td class="px-3 py-2 text-right whitespace-nowrap">
+                  <td class="hidden md:table-cell px-3 py-2 text-right whitespace-nowrap">
                     {j.cutLengthMain ?? '-'}{j.cutLengthCross != null ? ` / ${j.cutLengthCross}` : ''}
                   </td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">{formatManwon(j.price)}</td>
@@ -224,7 +224,7 @@ adminRoutes.get('/', async (c) => {
         </div>
       )}
       {totalPages > 1 && (
-        <div class="flex items-center justify-center gap-1.5 mt-4 text-sm">
+        <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4 text-sm">
           {safePage > 1 && (
             <a href="/rhksflwk?page=1" title="처음" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">«</a>
           )}
@@ -290,7 +290,7 @@ adminRoutes.get('/customers', async (c) => {
       </section>
 
             <section class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <table class="min-w-full text-sm">
+        <table class="data-table min-w-full text-xs sm:text-sm">
           <thead class="bg-slate-100 text-slate-700">
             <tr>
               <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">ID</th>
@@ -373,7 +373,7 @@ adminRoutes.get('/customers/:id', async (c) => {
       </section>
 
       <section class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <table class="min-w-full text-sm">
+        <table class="data-table min-w-full text-xs sm:text-sm">
                     <thead class="bg-slate-100 text-slate-700">
             <tr>
               <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">ID</th>

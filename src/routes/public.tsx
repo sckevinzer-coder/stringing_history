@@ -258,7 +258,7 @@ publicRoutes.get('/', async (c) => {
           </div>
         ) : (
           <div class="overflow-x-auto bg-white border border-slate-200 rounded-lg">
-            <table class="min-w-full text-sm">
+            <table class="data-table min-w-full text-xs sm:text-sm">
               <thead class="bg-slate-100 text-slate-700">
                 <tr>
                   {sortableHeader('jobDate', '작업일')}
@@ -267,7 +267,7 @@ publicRoutes.get('/', async (c) => {
                   {sortableHeader('stringType', '스트링')}
                   {sortableHeader('tensionMain', '텐션 (lbs)')}
                   {sortableHeader('price', '비용')}
-                  <th class="text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">메모</th>
+                  <th class="hidden md:table-cell text-left px-3 py-2 hover:bg-slate-200 cursor-pointer">메모</th>
                 </tr>
               </thead>
               <tbody>
@@ -288,7 +288,7 @@ publicRoutes.get('/', async (c) => {
                     </td>
                     <td class="px-3 py-2 text-right whitespace-nowrap">{fmtTension(r.tensionMain, r.tensionCross)}</td>
                                         <td class="px-3 py-2 text-right whitespace-nowrap">{fmtPrice(r.price ?? r.masterCost)}</td>
-                    <td class="px-3 py-2 max-w-xs">
+                    <td class="hidden md:table-cell px-3 py-2 max-w-xs">
                       {r.memo ? <span class="text-slate-600">{escapeHtml(r.memo)}</span> : <span class="text-slate-400">-</span>}
                     </td>
                   </tr>
@@ -298,7 +298,7 @@ publicRoutes.get('/', async (c) => {
           </div>
         )}
 
-        <nav class="flex justify-center items-center gap-1.5 mt-4 text-sm">
+        <nav class="flex flex-wrap justify-center items-center gap-1.5 mt-4 text-sm">
           {safePage > 1 && (
             <a href={`/${buildQs({ page: 1 })}`} title="처음" class="px-2.5 py-1.5 rounded border border-slate-300 hover:bg-slate-50">«</a>
           )}

@@ -110,9 +110,9 @@ export const StringForm: FC<{
         </label>
       </div>
 
-      <div class="flex gap-2">
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">{isEdit ? '수정 저장' : '등록'}</button>
-        <a href="/rhksflwk/strings" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50">취소</a>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded text-sm w-full sm:w-auto">{isEdit ? '수정 저장' : '등록'}</button>
+        <a href="/rhksflwk/strings" class="px-4 py-2.5 sm:py-2 rounded text-sm border border-slate-300 hover:bg-slate-50 text-center w-full sm:w-auto">취소</a>
       </div>
     </form>
   )

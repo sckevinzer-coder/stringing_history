@@ -22,6 +22,10 @@ export const Layout: FC<{ children: any; title: string; isAdmin: boolean; appNam
           .toast-exit { animation: toast-out 0.2s ease-in forwards; }
           @keyframes spin { to { transform: rotate(360deg); } }
           .spinner { animation: spin 0.6s linear infinite; }
+          /* 모바일 테이블 최적화: 작은 글씨 + 좁은 여백 (639px 이하) */
+          @media (max-width: 639px) {
+            .data-table th, .data-table td { padding-left: 0.5rem; padding-right: 0.5rem; }
+          }
         `}</style>
       </head>
       <body class="min-h-screen bg-slate-50 text-slate-900">
@@ -32,7 +36,7 @@ export const Layout: FC<{ children: any; title: string; isAdmin: boolean; appNam
               <span aria-hidden>🎾</span>
               <span>{appName}</span>
             </a>
-            <nav class="flex items-center gap-3 text-sm">
+            <nav class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <a href="/" class="text-slate-700 hover:text-blue-600">작업 이력</a>
               <a href="/strings" class="text-slate-700 hover:text-blue-600">보유 스트링</a>
               {isAdmin && <a href="/rhksflwk" class="text-slate-700 hover:text-blue-600">대시보드</a>}
