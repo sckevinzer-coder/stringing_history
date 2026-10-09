@@ -19,7 +19,8 @@ export async function createRequestIssue(
       body: JSON.stringify({ title, body }),
     })
     if (!res.ok) {
-      console.error(`GitHub issue 생성 실패: ${res.status}`)
+      const detail = await res.text().catch(() => '')
+      console.error(`GitHub issue 생성 실패: ${res.status} ${detail.slice(0, 300)}`)
       return null
     }
     const data = (await res.json()) as { number?: number }
