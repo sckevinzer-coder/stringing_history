@@ -86,8 +86,18 @@ export function summaryLine(opts: {
 
 // 포맷 유틸
 export function formatCost(n: number | null | undefined): string {
+  return formatManwon(n)
+}
+
+// 금액을 만원 단위로 짧게 표시 (2만원 / 2.5만원 / 5천원)
+// 천원 미만 단수는 천원 반올림 (12,300원 → 1.2만원)
+export function formatManwon(n: number | null | undefined): string {
   if (n == null) return '-'
-  return `₩${Number(n).toLocaleString('ko-KR')}`
+  const v = Number(n)
+  if (!Number.isFinite(v)) return '-'
+  if (v < 10000) return `${Math.round(v / 1000)}천원`
+  const m = Math.round(v / 1000) / 10
+  return `${m}만원`
 }
 
 // 강성: 숫자면 "N RA", 텍스트("부드러움" 등)면 그대로
