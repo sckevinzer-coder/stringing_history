@@ -10,6 +10,7 @@ import { asc, desc, eq, count, inArray } from 'drizzle-orm'
 import { escapeHtml, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
 import { sessions } from '../db/schema'
 import { buildCookie } from '../lib/auth'
+import { formatManwon, categoryLabel } from '../lib/stringLabels'
 import { consumeStringUse, restoreStringUse } from '../lib/stringUsage'
 
 // Toast 리다이렉트 헬퍼
@@ -126,10 +127,12 @@ adminRoutes.get('/', async (c) => {
       racketStringPattern: rackets.stringPattern,
       customerId: customers.id,
       customerName: customers.name,
+      masterCategory: strings.category,
     })
     .from(stringJobs)
     .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
     .innerJoin(customers, eq(customers.id, rackets.customerId))
+    .leftJoin(strings, eq(strings.id, stringJobs.stringId))
     .orderBy(desc(stringJobs.jobDate), desc(stringJobs.id))
     .limit(PAGE_SIZE)
     .offset(safeOffset)
@@ -176,14 +179,17 @@ adminRoutes.get('/', async (c) => {
                       {j.racketHeadSize != null ? `${j.racketHeadSize} sq.in` : '-'}{j.racketStringPattern ? ` · ${escapeHtml(j.racketStringPattern)}` : ''}
                     </div>
                   </td>
-                  <td class="px-3 py-2">{escapeHtml(j.stringType)}</td>
+                  <td class="px-3 py-2">
+                    <div>{escapeHtml(j.stringType)}</div>
+                    {j.masterCategory && <div class="mt-0.5 inline-block text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2 py-px">{categoryLabel(j.masterCategory)}</div>}
+                  </td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     {j.tensionMain ?? '-'}{j.tensionCross != null ? ` / ${j.tensionCross}` : ''}
                   </td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     {j.cutLengthMain ?? '-'}{j.cutLengthCross != null ? ` / ${j.cutLengthCross}` : ''}
                   </td>
-                  <td class="px-3 py-2 text-right whitespace-nowrap">{j.price != null ? `${j.price.toLocaleString('ko-KR')}원` : '-'}</td>
+                  <td class="px-3 py-2 text-right whitespace-nowrap">{formatManwon(j.price)}</td>
                   <td class="px-3 py-2 text-right whitespace-nowrap">
                     <a href={`/rhksflwk/new?copy=${j.id}`} class="text-emerald-600 hover:underline" title="이 작업 내용을 복사해 새 이력 등록">복사</a>
                     <a href={`/rhksflwk/edit/${j.id}`} class="text-blue-600 hover:underline ml-2">수정</a>

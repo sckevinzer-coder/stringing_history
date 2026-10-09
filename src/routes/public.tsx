@@ -6,7 +6,7 @@ import { getDb } from '../db/client'
 import { customers, rackets, stringJobs, strings } from '../db/schema'
 import { and, asc, desc, eq, gte, like, lte, or } from 'drizzle-orm'
 import { escapeHtml } from '../lib/validation'
-import { STRING_CATEGORIES } from '../lib/stringLabels'
+import { STRING_CATEGORIES, formatManwon, categoryLabel } from '../lib/stringLabels'
 import { siteAuthMiddleware } from '../middleware/auth'
 
 export const publicRoutes = new Hono<AppEnv>()
@@ -25,8 +25,7 @@ function fmtTension(main: number | null, cross: number | null) {
   return `${main ?? cross}`
 }
 function fmtPrice(p: number | null) {
-  if (p == null) return '-'
-  return `${p.toLocaleString('ko-KR')}원`
+  return formatManwon(p)
 }
 function fmtLenPair(main: number | null, cross: number | null) {
   if (main == null && cross == null) return '-'
@@ -135,6 +134,7 @@ publicRoutes.get('/', async (c) => {
       customerName: customers.name,
       // 마스터 스트링 가격 정보 (표시 시점 계산용)
       masterCost: strings.cost,
+      masterCategory: strings.category,
     })
     .from(stringJobs)
     .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
@@ -255,9 +255,12 @@ publicRoutes.get('/', async (c) => {
                         {fmtHeadSize(r.racketHeadSize)} · {r.racketStringPattern ? escapeHtml(r.racketStringPattern) : '-'}
                       </div>
                     </td>
-                    <td class="px-3 py-2">{escapeHtml(r.stringType)}</td>
+                    <td class="px-3 py-2">
+                      <div>{escapeHtml(r.stringType)}</div>
+                      {r.masterCategory && <div class="mt-0.5 inline-block text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2 py-px">{categoryLabel(r.masterCategory)}</div>}
+                    </td>
                     <td class="px-3 py-2 text-right whitespace-nowrap">{fmtTension(r.tensionMain, r.tensionCross)}</td>
-                                        <td class="px-3 py-2 text-right whitespace-nowrap">{r.price != null ? fmtPrice(r.price) : '-'}</td>
+                                        <td class="px-3 py-2 text-right whitespace-nowrap">{fmtPrice(r.price ?? r.masterCost)}</td>
                     <td class="px-3 py-2 max-w-xs">
                       {r.memo ? <span class="text-slate-600">{escapeHtml(r.memo)}</span> : <span class="text-slate-400">-</span>}
                     </td>
