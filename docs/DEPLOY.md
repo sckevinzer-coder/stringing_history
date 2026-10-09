@@ -31,6 +31,7 @@ ADMIN_PASSWORD="admin1234"
 | 이름 | 종류 | 설명 | 설정 방법 |
 |---|---|---|---|
 | `ADMIN_PASSWORD` | Secret | 관리자 비밀번호 | `npx wrangler secret put ADMIN_PASSWORD` |
+| `GITHUB_TOKEN` | Secret | 신청 접수 시 GitHub 이슈 자동 생성용 (Issues 쓰기 권한). 없으면 신청 저장만 되고 이슈는 스킵 | `npx wrangler secret put GITHUB_TOKEN` |
 | `APP_NAME` | Vars | 사이트 이름 (헤더) | `wrangler.toml` `[vars]` 섹션 |
 | `SESSION_COOKIE_NAME` | Vars | 세션 쿠키 이름 | `wrangler.toml` |
 | `SESSION_TTL_SECONDS` | Vars | 세션 유효기간 (기본 30일) | `wrangler.toml` |

@@ -368,6 +368,12 @@
 - [x] 공개 작업이력 비용열 모바일 숨김 (2026-10-09 — 메모열과 동일 방식, 데스크탑 유지)
 - [x] 공개 검색폼 텐션 범위 모바일 숨김 (2026-10-09 — 데스크탑 유지)
 
+## 완료 (Phase 5-24) — 고객 신청 기능 (2026-10-09)
+
+- `requests` 테이블 + 신청 접수(`/apply`) + GitHub 이슈 자동 생성 + 관리자 신청 관리(`/rhksflwk/requests`) + 이력 변환(`/rhksflwk/new?request=`)
+- 스펙: `docs/superpowers/specs/2026-10-09-requests-design.md`, 계획: `docs/superpowers/plans/2026-10-09-requests.md`
+- ⚠️ 남은 수동 작업: `GITHUB_TOKEN` 시크릿 등록 + GitHub 알림 메일 설정(Watch → Issues) + 테스트 신청 1건으로 이슈/메일 확인
+
 ## 완료로 정리 (백로그에서 제거)
 
 - ~~`string_jobs.string_type` 일괄 매핑 스크립트~~ — `scripts/string_id_link.sql`로 수행됨 (173건 중 113건 매칭, 2026-09)

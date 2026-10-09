@@ -82,6 +82,8 @@
 | `0002_seed.sql` | 로컬 개발용 시드 데이터 | `seed.local.sql`로 이동 (운영 마이그레이션 목록에서 제외) |
 | `0003_racket_attrs_and_cut_lengths.sql` | rackets에 head_size, string_pattern / string_jobs에 cut_length_main, cut_length_cross / cut_length 제거 | |
 | `0004_strings.sql` (예정) | strings 테이블 + string_jobs.string_id 컬럼 + 인덱스 | Phase 2 |
+| `0005_remaining_uses.sql` | strings에 remaining_uses 컬럼 | Phase 5-17 |
+| `0006_requests.sql` | requests 테이블 (고객 신청) + 인덱스 | Phase 5-24 |
 
 ## 관계도
 
@@ -94,3 +96,23 @@ customers (1) ──< (N) rackets (1) ──< (N) string_jobs
 - 라켓 삭제 → string_jobs cascade 삭제
 - 고객 삭제 → rackets cascade 삭제 → string_jobs cascade 삭제
 - 스트링 마스터 삭제 → string_jobs의 string_id는 NULL로 설정 (string_type은 유지되어 작업 이력은 보존)
+
+### `requests` (고객 신청) — **Phase 5-24 신규**
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| id | INTEGER PK | |
+| type | TEXT | `job`(작업 신청) / `purchase`(구매 요청) |
+| customer_name | TEXT NOT NULL | 신청자 이름 |
+| string_id | INTEGER NULL, FK → strings(id) ON DELETE SET NULL | 선택 스트링 (품절은 작업 신청 불가) |
+| string_type | TEXT NULL | 변환 시점 스냅샷 (`브랜드 이름 게이지`) |
+| tension_main / tension_cross | REAL NULL | job 필수(main) |
+| racket_model | TEXT NULL | 자유 입력 (job) |
+| job_date | TEXT NULL | 희망 날짜 (job, 선택) |
+| string_custom | TEXT NULL | 목록 외 스트링 직접 입력 (purchase) |
+| memo | TEXT NULL | |
+| status | TEXT | `new` / `done`(이력 변환) / `dismissed` |
+| issue_number | INTEGER NULL | GitHub 이슈 번호 (발급 실패 시 NULL) |
+
+- 인덱스: `idx_requests_status`, `idx_requests_type`
+- 신청 시 `remaining_uses` 차감 없음. `/rhksflwk/new` 변환 등록 시 기존 `consumeStringUse`로 차감

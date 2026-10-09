@@ -68,6 +68,8 @@ Base: Workers URL (예: `https://tennis.stringing.workers.dev`)
 | GET | `/` | - | 공개 작업 이력 목록 (Phase 2에서 보유 스트링 섹션 추가) |
 | GET | `/strings` | - | 공개 스트링 마스터 목록 (Phase 2) |
 | GET | `/strings/:id` | - | 공개 스트링 단건 상세 (Phase 2, 선택) |
+| GET | `/apply?type=job\|purchase&string={id}` | 뷰어 | 신청 폼 (Phase 5-24) |
+| POST | `/apply` | 뷰어 | 신청 접수 — 저장 + GitHub 이슈 생성 (Phase 5-24, 10회/10분 제한) |
 | GET | `/admin/login` | - | 로그인 페이지 |
 | GET | `/admin` | 필요 | 대시보드 |
 | GET | `/admin/customers` | 필요 | 고객 목록 |
@@ -88,4 +90,8 @@ Base: Workers URL (예: `https://tennis.stringing.workers.dev`)
 | GET | `/admin/rackets/:id/edit` | 필요 | 라켓 수정 폼 |
 | POST | `/admin/rackets/:id/edit` | 필요 | 라켓 수정 처리 |
 | POST | `/admin/rackets/:id/delete` | 필요 | 라켓 삭제 |
+| GET | `/admin/requests` | 필요 | 신청 목록 (Phase 5-24, `?status=new\|done\|dismissed`) |
+| POST | `/admin/requests/:id/done` | 필요 | 신청 완료 처리 (Phase 5-24) |
+| POST | `/admin/requests/:id/dismiss` | 필요 | 신청 반려 (Phase 5-24) |
+| POST | `/admin/requests/:id/delete` | 필요 | 신청 삭제 (Phase 5-24) |
 | GET | `/health` | - | 헬스 체크 `{ok:true}` |
