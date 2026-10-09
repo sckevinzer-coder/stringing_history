@@ -628,7 +628,7 @@ adminRoutes.get('/new', async (c) => {
   } | null = null
   if (requestParamId != null) {
     const rRows = await db.select().from(requests).where(eq(requests.id, requestParamId)).all()
-    if (rRows.length === 0 || rRows[0].type !== 'job') return c.notFound()
+    if (rRows.length === 0 || rRows[0].type !== 'job' || rRows[0].status !== 'new') return c.notFound()
     const rq = rRows[0]
     requestJob = {
       id: rq.id, customerName: rq.customerName,
