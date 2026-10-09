@@ -15,6 +15,7 @@ export async function createRequestIssue(
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
+        'User-Agent': 'stringing-history-worker',
       },
       body: JSON.stringify({ title, body }),
     })
