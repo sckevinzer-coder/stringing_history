@@ -5,8 +5,8 @@ import { requireAdmin, loginRateLimiter } from '../middleware/auth'
 import { Layout } from '../views/layout'
 import { JobForm } from '../views/JobForm'
 import { getDb } from '../db/client'
-import { customers, rackets, stringJobs, strings } from '../db/schema'
-import { asc, desc, eq, count, inArray } from 'drizzle-orm'
+import { customers, rackets, stringJobs, strings, requests } from '../db/schema'
+import { and, asc, desc, eq, count, inArray } from 'drizzle-orm'
 import { escapeHtml, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
 import { sessions } from '../db/schema'
 import { buildCookie } from '../lib/auth'
@@ -155,6 +155,9 @@ adminRoutes.get('/', async (c) => {
     .offset(safeOffset)
     .all()
 
+  const newRequestRows = await db.select({ n: count() }).from(requests).where(eq(requests.status, 'new')).all()
+  const newRequestCount = newRequestRows[0]?.n ?? 0
+
   return c.html(
     <Layout title="관리자 대시보드" isAdmin={true} appName={c.env.APP_NAME}>
       <div class="flex items-center justify-between mb-4">
@@ -163,8 +166,14 @@ adminRoutes.get('/', async (c) => {
           <a href="/rhksflwk/new" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded">+ 작업 등록</a>
           <a href="/rhksflwk/strings" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded">스트링 관리</a>
           <a href="/rhksflwk/customers" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded">고객 관리</a>
+          <a href="/rhksflwk/requests" class="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded">신청 관리</a>
         </nav>
       </div>
+      {newRequestCount > 0 && (
+        <div class="mb-4">
+          <a href="/rhksflwk/requests" class="inline-block text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-100">신규 신청 {newRequestCount}건 →</a>
+        </div>
+      )}
       <p class="text-sm text-slate-600 mb-4">전체 {total}건 중 {safeOffset + 1}–{Math.min(safeOffset + PAGE_SIZE, total)} 표시 (페이지 {safePage}/{totalPages})</p>
             {jobs.length === 0 ? (
         <div class="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center text-slate-500">
@@ -561,6 +570,7 @@ adminRoutes.get('/new', async (c) => {
   const url = new URL(c.req.url)
   const presetCustomerId = numOrNull(url.searchParams.get('customer_id'))
   const copyId = numOrNull(url.searchParams.get('copy'))
+  const requestParamId = numOrNull(url.searchParams.get('request'))
   const db = getDb(c.env.DB)
   // 복사 모드: 기존 작업 1건을 조회해 폼 프리필 (날짜는 오늘로)
   let copyJob: {
@@ -609,6 +619,25 @@ adminRoutes.get('/new', async (c) => {
     ? (allRacketsByCustomer[String(effectivePresetCustomerIdRaw)] ?? [])
     : []
 
+  // 신청 변환 모드: 신청 1건을 조회해 폼 프리필 (작업 신청만, 고객/라켓은 직접 선택)
+  let requestJob: {
+    id: number; customerName: string
+    stringType: string; stringId: number | null
+    tensionMain: number | null; tensionCross: number | null
+    jobDate: string | null; memo: string | null; racketModel: string | null
+  } | null = null
+  if (requestParamId != null) {
+    const rRows = await db.select().from(requests).where(eq(requests.id, requestParamId)).all()
+    if (rRows.length === 0 || rRows[0].type !== 'job') return c.notFound()
+    const rq = rRows[0]
+    requestJob = {
+      id: rq.id, customerName: rq.customerName,
+      stringType: rq.stringType ?? '', stringId: rq.stringId,
+      tensionMain: rq.tensionMain, tensionCross: rq.tensionCross,
+      jobDate: rq.jobDate, memo: rq.memo, racketModel: rq.racketModel,
+    }
+  }
+
   const masterStringsRaw = await db
     .select({ id: strings.id, brand: strings.brand, name: strings.name, gauge: strings.gauge, remainingUses: strings.remainingUses })
     .from(strings)
@@ -620,14 +649,20 @@ adminRoutes.get('/new', async (c) => {
   const copyToday = new Date().toISOString().slice(0, 10)
 
   return c.html(
-    <Layout title={copyJob ? '작업 복사 등록' : '작업 등록'} isAdmin={true} appName={c.env.APP_NAME}>
+    <Layout title={copyJob ? '작업 복사 등록' : requestJob ? '신청 변환 등록' : '작업 등록'} isAdmin={true} appName={c.env.APP_NAME}>
       <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold">{copyJob ? '작업 복사 등록' : '새 작업 등록'}</h1>
+        <h1 class="text-2xl font-semibold">{copyJob ? '작업 복사 등록' : requestJob ? '신청 변환 등록' : '새 작업 등록'}</h1>
         <a href="/rhksflwk" class="text-sm text-slate-600 hover:text-blue-600">← 대시보드</a>
       </div>
       {copyJob && (
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded px-3 py-2 mb-4 text-sm">
           이전 작업 내용을 복사했습니다. 날짜는 오늘로 설정되어 있습니다. 라켓/스트링 등 변경 후 등록하세요.
+        </div>
+      )}
+      {requestJob && (
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded px-3 py-2 mb-4 text-sm">
+          신청 #{requestJob.id} ({escapeHtml(requestJob.customerName)}) 내용을 가져왔습니다.
+          {requestJob.racketModel ? ` 신청 라켓: ${escapeHtml(requestJob.racketModel)} —` : ''} 고객/라켓을 선택하고 등록하세요.
         </div>
       )}
       <JobForm
@@ -638,6 +673,7 @@ adminRoutes.get('/new', async (c) => {
         allRacketsByCustomer={allRacketsByCustomer}
         masterStrings={masterStrings}
         isEdit={false}
+        requestId={requestJob?.id ?? null}
         values={copyJob ? {
           racketId: copyJob.racketId,
           stringType: copyJob.stringType,
@@ -649,6 +685,17 @@ adminRoutes.get('/new', async (c) => {
           jobDate: copyToday,
           price: copyJob.price,
           memo: copyJob.memo,
+        } : requestJob ? {
+          racketId: 0,
+          stringType: requestJob.stringType,
+          stringId: requestJob.stringId,
+          tensionMain: requestJob.tensionMain,
+          tensionCross: requestJob.tensionCross,
+          cutLengthMain: null,
+          cutLengthCross: null,
+          jobDate: requestJob.jobDate ?? copyToday,
+          price: null,
+          memo: requestJob.memo,
         } : undefined}
       />
     </Layout>,
@@ -715,6 +762,11 @@ adminRoutes.post('/new', async (c) => {
     }
     await db.insert(stringJobs).values(insert).run()
     await consumeStringUse(db, insert.stringId)
+    // 신청 변환 등록이면 해당 신청을 완료 처리 (new 상태일 때만)
+    const requestId = numOrNull(body.request_id)
+    if (requestId != null) {
+      await db.update(requests).set({ status: 'done' }).where(and(eq(requests.id, requestId), eq(requests.status, 'new'))).run()
+    }
     return toastRedirect('/rhksflwk', '작업이 등록되었습니다.')
   } catch (e: any) {
     if (e instanceof ValidationError) {

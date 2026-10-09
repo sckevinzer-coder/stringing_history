@@ -34,7 +34,8 @@ export const JobForm: FC<{
   isEdit: boolean
   editId?: number
   values?: JobValues
-}> = ({ customers, presetCustomerId, presetCustomerName, presetRackets, allRacketsByCustomer, masterStrings, isEdit, editId, values }) => {
+  requestId?: number | null
+}> = ({ customers, presetCustomerId, presetCustomerName, presetRackets, allRacketsByCustomer, masterStrings, isEdit, editId, values, requestId }) => {
   const today = new Date().toISOString().slice(0, 10)
   const v: JobValues = values ?? {
     racketId: 0, stringType: '', stringId: null, tensionMain: null, tensionCross: null,
@@ -49,6 +50,7 @@ export const JobForm: FC<{
     : presetRackets
   return (
     <form method="post" action={action} class="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
+      {requestId != null && <input type="hidden" name="request_id" value={requestId} />}
       <div class="grid gap-3 md:grid-cols-2">
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">고객 <span class="text-red-500">*</span></span>

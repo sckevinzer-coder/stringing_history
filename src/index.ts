@@ -6,6 +6,7 @@ import { authApi } from './routes/auth'
 import { publicRoutes } from './routes/public'
 import { adminRoutes } from './routes/admin'
 import { stringsRoutes } from './routes/strings'
+import { requestsRoutes } from './routes/requests'
 import { getDb } from './db/client'
 import { sessions } from './db/schema'
 import { eq } from 'drizzle-orm'
@@ -110,6 +111,7 @@ app.get('/logout', async (c) => {
 // 페이지 라우트
 app.route('/rhksflwk', adminRoutes)    // 관리자 (비밀번호 인증 필요, 경로: /rhksflwk)
 app.route('/rhksflwk/strings', stringsRoutes)  // 스트링 마스터 관리
+app.route('/rhksflwk/requests', requestsRoutes)  // 고객 신청 관리
 app.route('/', publicRoutes)          // 작업 이력 (비밀번호 인증 필요)
 app.route('/strings', publicRoutes)   // 보조 스트링 목록 (publicRoutes에서 처리)
 
