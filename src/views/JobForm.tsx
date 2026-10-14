@@ -168,28 +168,39 @@ export const JobForm: FC<{
             if (stInput && sidInput && list) {
               var map = {};
               var remainingMap = {};
+              var remainingById = {};
               Array.prototype.forEach.call(list.querySelectorAll('option[data-string-id]'), function (opt) {
                 map[opt.getAttribute('value')] = opt.getAttribute('data-string-id');
                 remainingMap[opt.getAttribute('value')] = opt.getAttribute('data-remaining');
+                remainingById[opt.getAttribute('data-string-id')] = opt.getAttribute('data-remaining');
               });
+              // 복사/수정으로 들어온 기존 값: 텍스트를 안 건드렸으면 기존 연결 유지
+              var initialVal = stInput.value.trim();
+              var initialSid = sidInput.value;
+              function showRemaining(rem){
+                if (!remainingInfo) return;
+                if (rem != null && rem !== '') {
+                  var n = Number(rem);
+                  remainingInfo.textContent = n === 0 ? '⚠ 이 스트링은 품절 상태입니다' : ('잔여 ' + rem + '회 (등록 시 1회 차감)');
+                  remainingInfo.classList.remove('hidden');
+                } else {
+                  remainingInfo.classList.add('hidden');
+                }
+              }
               function sync(){
                 var val = stInput.value.trim();
                 if (map[val]) {
                   sidInput.value = map[val];
                   if (matchInfo) matchInfo.classList.remove('hidden');
+                  showRemaining(remainingMap[val]);
+                } else if (val === initialVal && initialSid) {
+                  sidInput.value = initialSid;
+                  if (matchInfo) matchInfo.classList.add('hidden');
+                  showRemaining(remainingById[initialSid]);
                 } else {
                   sidInput.value = '';
                   if (matchInfo) matchInfo.classList.add('hidden');
-                }
-                var rem = remainingMap[val];
-                if (remainingInfo) {
-                  if (rem != null && rem !== '') {
-                    var n = Number(rem);
-                    remainingInfo.textContent = n === 0 ? '⚠ 이 스트링은 품절 상태입니다' : ('잔여 ' + rem + '회 (등록 시 1회 차감)');
-                    remainingInfo.classList.remove('hidden');
-                  } else {
-                    remainingInfo.classList.add('hidden');
-                  }
+                  showRemaining(null);
                 }
               }
               stInput.addEventListener('input', sync);
