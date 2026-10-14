@@ -6,8 +6,8 @@ import { Layout } from '../views/layout'
 import { JobForm } from '../views/JobForm'
 import { getDb } from '../db/client'
 import { customers, rackets, stringJobs, strings, requests } from '../db/schema'
-import { and, asc, desc, eq, count, inArray } from 'drizzle-orm'
-import { escapeHtml, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
+import { and, asc, desc, eq, count, inArray, like } from 'drizzle-orm'
+import { escapeHtml, escapeLike, ValidationError, requireString, toDateOrThrow, toNumberOrNull, numOrNull } from '../lib/validation'
 import { sessions } from '../db/schema'
 import { buildCookie } from '../lib/auth'
 import { formatManwon, categoryLabel } from '../lib/stringLabels'
@@ -119,10 +119,20 @@ adminRoutes.use('/*', requireAdmin)
 adminRoutes.get('/', async (c) => {
   const url = new URL(c.req.url)
   const page = Math.max(1, numOrNull(url.searchParams.get('page')) ?? 1)
+  const q = (url.searchParams.get('q') ?? '').trim()
   const PAGE_SIZE = 100
   const db = getDb(c.env.DB)
 
-  const totalRows = await db.select({ n: count() }).from(stringJobs).all()
+  const where = q ? like(customers.name, `%${escapeLike(q)}%`) : undefined
+  const qParam = q ? `&q=${encodeURIComponent(q)}` : ''
+
+  const totalRows = await db
+    .select({ n: count() })
+    .from(stringJobs)
+    .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
+    .innerJoin(customers, eq(customers.id, rackets.customerId))
+    .where(where as any)
+    .all()
   const total = totalRows[0]?.n ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -150,6 +160,7 @@ adminRoutes.get('/', async (c) => {
     .innerJoin(rackets, eq(rackets.id, stringJobs.racketId))
     .innerJoin(customers, eq(customers.id, rackets.customerId))
     .leftJoin(strings, eq(strings.id, stringJobs.stringId))
+    .where(where as any)
     .orderBy(desc(stringJobs.jobDate), desc(stringJobs.id))
     .limit(PAGE_SIZE)
     .offset(safeOffset)
@@ -174,10 +185,17 @@ adminRoutes.get('/', async (c) => {
           <a href="/rhksflwk/requests" class="inline-block text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-100">신규 신청 {newRequestCount}건 →</a>
         </div>
       )}
-      <p class="text-sm text-slate-600 mb-4">전체 {total}건 중 {safeOffset + 1}–{Math.min(safeOffset + PAGE_SIZE, total)} 표시 (페이지 {safePage}/{totalPages})</p>
+      <section class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+        <form method="get" action="/rhksflwk" class="flex gap-2">
+          <input name="q" value={escapeHtml(q)} placeholder="고객명 검색 (예: 홍길동)" class="flex-1 border border-slate-300 rounded px-3 py-2 text-sm" />
+          <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm whitespace-nowrap">검색</button>
+          {q && <a href="/rhksflwk" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50 whitespace-nowrap">초기화</a>}
+        </form>
+      </section>
+      <p class="text-sm text-slate-600 mb-4">전체 {total}건 중 {total === 0 ? 0 : safeOffset + 1}–{Math.min(safeOffset + PAGE_SIZE, total)} 표시 (페이지 {safePage}/{totalPages})</p>
             {jobs.length === 0 ? (
         <div class="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center text-slate-500">
-          등록된 작업이 없습니다. 우측 상단의 "+ 작업 등록"을 눌러 시작하세요.
+          등록된 작업이 없습니다. {q ? '다른 고객명으로 검색해보세요.' : '우측 상단의 "+ 작업 등록"을 눌러 시작하세요.'}
         </div>
       ) : (
         <div class="overflow-x-auto bg-white border border-slate-200 rounded-lg">
@@ -235,10 +253,10 @@ adminRoutes.get('/', async (c) => {
       {totalPages > 1 && (
         <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4 text-sm">
           {safePage > 1 && (
-            <a href="/rhksflwk?page=1" title="처음" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">«</a>
+            <a href={`/rhksflwk?page=1${qParam}`} title="처음" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">«</a>
           )}
           {safePage > 1 ? (
-            <a href={`/rhksflwk?page=${safePage - 1}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">‹</a>
+            <a href={`/rhksflwk?page=${safePage - 1}${qParam}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">‹</a>
           ) : (
             <span class="px-2.5 py-1.5 border border-slate-200 rounded text-slate-400">‹</span>
           )}
@@ -248,16 +266,16 @@ adminRoutes.get('/', async (c) => {
             ) : p === safePage ? (
               <span class="px-2.5 py-1.5 rounded bg-blue-600 text-white font-medium">{p}</span>
             ) : (
-              <a href={`/rhksflwk?page=${p}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">{p}</a>
+              <a href={`/rhksflwk?page=${p}${qParam}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">{p}</a>
             ),
           )}
           {safePage < totalPages ? (
-            <a href={`/rhksflwk?page=${safePage + 1}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">›</a>
+            <a href={`/rhksflwk?page=${safePage + 1}${qParam}`} class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">›</a>
           ) : (
             <span class="px-2.5 py-1.5 border border-slate-200 rounded text-slate-400">›</span>
           )}
           {safePage < totalPages && (
-            <a href={`/rhksflwk?page=${totalPages}`} title="마지막" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">»</a>
+            <a href={`/rhksflwk?page=${totalPages}${qParam}`} title="마지막" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50">»</a>
           )}
         </div>
       )}
