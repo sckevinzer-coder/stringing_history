@@ -559,7 +559,7 @@ publicRoutes.post('/apply', async (c) => {
           <div class="text-4xl mb-3">✅</div>
           <h1 class="text-xl font-semibold mb-2">신청이 접수되었습니다</h1>
           <p class="text-sm text-slate-600 mb-1">{escapeHtml(customerName)}님, {escapeHtml(stringLabel)}{type === 'job' ? ` (${tensionMain} lbs)` : ''}</p>
-          <p class="text-sm text-slate-500 mb-4">확인 후 작업 일정을 안내해드리겠습니다.</p>
+          <p class="text-sm text-slate-500 mb-4">확인 후 작업 일정을 안내해드리겠습니다. 라켓은 신청 폼의 전달 안내에 따라 맡겨주세요.</p>
           <div class="flex justify-center gap-2">
             <a href="/strings" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50">보유 스트링으로</a>
             <a href="/" class="px-4 py-2 rounded text-sm border border-slate-300 hover:bg-slate-50">작업 이력으로</a>

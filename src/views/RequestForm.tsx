@@ -73,6 +73,12 @@ export const RequestForm: FC<{
   return (
     <form method="post" action="/apply" class="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
       <input type="hidden" name="type" value={reqType} />
+      <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-900 space-y-1.5">
+        <p class="font-semibold">🎾 라켓 전달 안내</p>
+        <p><strong>맡기기:</strong> 아래 주소로 직접 가져오시거나, 테니스장 사무실 / 컨테이너에 넣어두세요.</p>
+        <p><strong>돌려받기:</strong> 문 앞에 두어 가져가시거나, 코트에서 직접 전달해 드립니다.</p>
+        <p class="pt-1">📍 영통로154번길 51-16 센트럴하이츠아파트 308동 1102호<br />🔑 공동현관 비밀번호: #11020929</p>
+      </div>
       <div class="grid gap-3 md:grid-cols-2">
         <label class="flex flex-col text-sm">
           <span class="text-slate-600 mb-1">이름 <span class="text-red-500">*</span></span>
